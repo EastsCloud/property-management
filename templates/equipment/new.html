@@ -1,0 +1,17 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<h4>新建设备</h4>
+<form method="post" class="row g-3">
+  <div class="col-md-4"><label class="form-label">名称</label><input name="name" class="form-control" required></div>
+  <div class="col-md-4"><label class="form-label">位置</label><input name="location" class="form-control"></div>
+  <div class="col-md-4"><label class="form-label">序列号</label><input name="serial" class="form-control"></div>
+  <div class="col-md-4"><label class="form-label">状态</label>
+    <select name="status" class="form-select">
+      <option>正常</option><option>维护</option><option>停用</option>
+    </select>
+  </div>
+  <div class="col-md-4"><label class="form-label">安装日期</label><input type="date" name="install_date" class="form-control"></div>
+  <div class="col-12"><button class="btn btn-primary">保存</button></div>
+</form>
+{% endblock %}

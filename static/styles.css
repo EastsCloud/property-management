@@ -1,0 +1,7 @@
+
+.stat .h3 { font-weight: 700; }
+table td, table th { vertical-align: middle; }
+@media (max-width: 768px){
+  .container-fluid { padding: 8px; }
+  .card { margin-bottom: 10px; }
+}
