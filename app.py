@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, redirect, url_for, flash
 from config import Config
 from models import db, Owner, ChargeType, Invoice, Payment, Equipment, MaintenancePlan, WorkOrder, Announcement
