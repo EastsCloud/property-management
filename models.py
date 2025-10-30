@@ -8,7 +8,7 @@ class Owner(db.Model):
     name = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(50))
     email = db.Column(db.String(120))
-    unit = db.Column(db.String(120))  # 房产信息（楼栋/单元/门牌）
+    unit = db.Column(db.String(120))   # 房产信息（楼栋/单元/门牌）
     vehicles = db.Column(db.Text)   # JSON: [{"plate":"沪A12345","model":"Tesla 3"}]
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -18,9 +18,9 @@ class Owner(db.Model):
 
 class ChargeType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)  # 物业费/停车费/水费/电费...
-    unit = db.Column(db.String(20), default="月")     # 计费单位
-    price = db.Column(db.Float, default=0.0)          # 单价
+    name = db.Column(db.String(120), nullable=False)   # 物业费/停车费/水费/电费...
+    unit = db.Column(db.String(20), default="月")   # 计费单位
+    price = db.Column(db.Float, default=0.0)   # 单价
     description = db.Column(db.String(255))
 
 class Invoice(db.Model):
@@ -29,7 +29,7 @@ class Invoice(db.Model):
     charge_type_id = db.Column(db.Integer, db.ForeignKey('charge_type.id'))
     amount = db.Column(db.Float, nullable=False)
     due_date = db.Column(db.Date, nullable=False)
-    status = db.Column(db.String(30), default="未支付")  # 未支付/已支付/逾期
+    status = db.Column(db.String(30), default="未支付")   # 未支付/已支付/逾期
     description = db.Column(db.String(255))
 
     charge_type = db.relationship('ChargeType')
@@ -50,7 +50,7 @@ class Equipment(db.Model):
     name = db.Column(db.String(120), nullable=False)
     location = db.Column(db.String(255))
     serial = db.Column(db.String(120))
-    status = db.Column(db.String(50), default="正常")  # 正常/维护/停用
+    status = db.Column(db.String(50), default="正常")   # 正常/维护/停用
     install_date = db.Column(db.Date)
 
     plans = db.relationship('MaintenancePlan', backref='equipment', lazy=True)
@@ -65,16 +65,16 @@ class MaintenancePlan(db.Model):
 
 class WorkOrder(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(50), default="维修")      # 维修/投诉/保洁/其他
+    type = db.Column(db.String(50), default="维修")   # 维修/投诉/保洁/其他
     description = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(30), default="新建")    # 新建/处理中/已完成/已关闭
-    priority = db.Column(db.String(20), default="中")    # 低/中/高
+    status = db.Column(db.String(30), default="新建")   # 新建/处理中/已完成/已关闭
+    priority = db.Column(db.String(20), default="中")   # 低/中/高
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     closed_at = db.Column(db.DateTime)
 
     owner_id = db.Column(db.Integer, db.ForeignKey('owner.id'))
     equipment_id = db.Column(db.Integer, db.ForeignKey('equipment.id'))
-    assignee = db.Column(db.String(120))  # 负责人
+    assignee = db.Column(db.String(120))   # 负责人
 
 class Announcement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
