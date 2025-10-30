@@ -1,0 +1,22 @@
+
+{% extends 'en/base.html' %}
+{% block content %}
+<h4>Charge Types</h4>
+<form method="post" class="row g-2 mb-3">
+  <div class="col-md-3"><input name="name" class="form-control" placeholder="Name (Property Fee etc.)" required></div>
+  <div class="col-md-2"><input name="unit" class="form-control" placeholder="Unit (e.g. Month)"></div>
+  <div class="col-md-2"><input name="price" class="form-control" placeholder="Price"></div>
+  <div class="col-md-3"><input name="description" class="form-control" placeholder="Description"></div>
+  <div class="col-md-2"><button class="btn btn-primary w-100">Add</button></div>
+</form>
+<table class="table table-striped">
+  <thead><tr><th>ID</th><th>Name</th><th>Unit</th><th>Price</th><th>Note</th></tr></thead>
+  <tbody>
+    {% for t in types %}
+      <tr><td>{{ t.id }}</td><td>{{ t.name }}</td><td>{{ t.unit }}</td><td>{{ t.price }}</td><td>{{ t.description or '-' }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+

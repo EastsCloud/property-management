@@ -1,0 +1,55 @@
+
+{% extends 'en/base.html' %}
+{% block content %}
+<h4>Equipment #{{ eq.id }}</h4>
+<form method="post" class="row g-3 mb-4">
+  <div class="col-md-4"><label class="form-label">Name</label><input name="name" class="form-control" value="{{ eq.name }}" required></div>
+  <div class="col-md-4"><label class="form-label">Location</label><input name="location" class="form-control" value="{{ eq.location }}"></div>
+  <div class="col-md-4"><label class="form-label">Serial</label><input name="serial" class="form-control" value="{{ eq.serial }}"></div>
+  <div class="col-md-4"><label class="form-label">Status</label>
+    <select name="status" class="form-select">
+      {% for s in ['正常','维护','停用'] %}
+        <option {{ 'selected' if eq.status==s else '' }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-12"><button class="btn btn-primary">Save</button></div>
+</form>
+
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card mb-3">
+      <div class="card-header">Maintenance Plans</div>
+      <ul class="list-group list-group-flush">
+        {% for p in plans %}
+          <li class="list-group-item">{{ p.frequency }} | Next: {{ p.next_date or '-' }} | {{ p.notes or '' }}</li>
+        {% else %}
+          <li class="list-group-item text-muted">None</li>
+        {% endfor %}
+      </ul>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('plan_new', eid=eq.id) }}" class="row g-2">
+          <div class="col-md-4"><input name="frequency" class="form-control" placeholder="Quarterly"></div>
+          <div class="col-md-4"><input type="date" name="next_date" class="form-control"></div>
+          <div class="col-md-4"><input name="notes" class="form-control" placeholder="Notes"></div>
+          <div class="col-12"><button class="btn btn-outline-primary">Add Plan</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card mb-3">
+      <div class="card-header">Related Work Orders</div>
+      <ul class="list-group list-group-flush">
+        {% for w in wos %}
+          <li class="list-group-item">{{ w.status }} - {{ w.description[:40] }}</li>
+        {% else %}
+          <li class="list-group-item text-muted">None</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

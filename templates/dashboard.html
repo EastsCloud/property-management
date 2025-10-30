@@ -1,0 +1,75 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-md-3">
+    <div class="card shadow-sm stat">
+      <div class="card-body">
+        <div class="small text-muted">业主总数</div>
+        <div class="h3">{{ owners }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm stat">
+      <div class="card-body">
+        <div class="small text-muted">未结清账单</div>
+        <div class="h3">{{ unpaid }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm stat">
+      <div class="card-body">
+        <div class="small text-muted">未完成工单</div>
+        <div class="h3">{{ open_wos }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm stat">
+      <div class="card-body">
+        <div class="small text-muted">设备数量</div>
+        <div class="h3">{{ equips }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header">最新公告</div>
+      <ul class="list-group list-group-flush">
+        {% for a in latest_ann %}
+          <li class="list-group-item">
+            <div class="fw-bold">{{ a.title }}</div>
+            <div class="text-muted small">{{ a.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+            <div class="small">{{ a.content[:120] }}{% if a.content|length>120 %}...{% endif %}</div>
+          </li>
+        {% else %}
+          <li class="list-group-item text-muted">暂无</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header">最近工单</div>
+      <ul class="list-group list-group-flush">
+      {% for w in recent_wos %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <span class="badge bg-secondary me-2">{{ w.type }}</span>
+            {{ w.description[:40] }}{% if w.description|length>40 %}...{% endif %}
+          </div>
+          <span class="small text-muted">{{ w.created_at.strftime('%Y-%m-%d') }}</span>
+        </li>
+      {% else %}
+        <li class="list-group-item text-muted">暂无</li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

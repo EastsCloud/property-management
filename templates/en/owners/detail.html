@@ -1,0 +1,52 @@
+
+{% extends 'en/base.html' %}
+{% block content %}
+<h4>Owner #{{ owner.id }}</h4>
+<form method="post" class="row g-3 mb-4">
+  <div class="col-md-4"><label class="form-label">Name</label><input name="name" class="form-control" value="{{ owner.name }}" required></div>
+  <div class="col-md-4"><label class="form-label">Phone</label><input name="phone" class="form-control" value="{{ owner.phone }}"></div>
+  <div class="col-md-4"><label class="form-label">Email</label><input name="email" class="form-control" value="{{ owner.email }}"></div>
+  <div class="col-md-6"><label class="form-label">Unit</label><input name="unit" class="form-control" value="{{ owner.unit }}"></div>
+  <div class="col-md-6"><label class="form-label">Vehicles (JSON)</label>
+    <textarea name="vehicles_json" class="form-control">{{ owner.vehicles or '[]' }}</textarea>
+  </div>
+  <div class="col-12 d-flex gap-2">
+    <button class="btn btn-primary">Save</button>
+    <form method="post" action="{{ url_for('owners_delete', oid=owner.id) }}" onsubmit="return confirm('Confirm delete?');">
+      <button class="btn btn-outline-danger">Delete</button>
+    </form>
+  </div>
+</form>
+
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card mb-3">
+      <div class="card-header">Invoices</div>
+      <ul class="list-group list-group-flush">
+        {% for i in invoices %}
+          <li class="list-group-item d-flex justify-content-between">
+            <div>{{ i.description or i.charge_type.name }} | Due ¥{{ '%.2f'|format(i.amount) }} | Due {{ i.due_date }}</div>
+            <span class="badge text-bg-{{ 'success' if i.status=='已支付' else 'warning' }}">{{ 'Paid' if i.status=='已支付' else i.status }}</span>
+          </li>
+        {% else %}
+          <li class="list-group-item text-muted">None</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card mb-3">
+      <div class="card-header">Work Orders</div>
+      <ul class="list-group list-group-flush">
+        {% for w in wos %}
+          <li class="list-group-item">{{ w.type }} - {{ w.status }} - {{ w.description[:40] }}{% if w.description|length>40 %}...{% endif %}</li>
+        {% else %}
+          <li class="list-group-item text-muted">None</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

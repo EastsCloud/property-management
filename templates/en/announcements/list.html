@@ -1,0 +1,28 @@
+
+{% extends 'en/base.html' %}
+{% block content %}
+<h4>Announcements</h4>
+<form method="post" class="row g-2 mb-3">
+  <div class="col-md-3"><input name="title" class="form-control" placeholder="Title" required></div>
+  <div class="col-md-7"><input name="content" class="form-control" placeholder="Content" required></div>
+  <div class="col-md-2 d-flex align-items-center">
+    <div class="form-check"><input class="form-check-input" type="checkbox" name="send_email" id="se"><label class="form-check-label" for="se">Email</label></div>
+    <button class="btn btn-primary ms-2">Publish</button>
+  </div>
+</form>
+<table class="table table-striped">
+  <thead><tr><th>ID</th><th>Time</th><th>Title</th><th>Content</th></tr></thead>
+  <tbody>
+  {% for a in anns %}
+    <tr>
+      <td>{{ a.id }}</td>
+      <td>{{ a.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>{{ a.title }}</td>
+      <td>{{ a.content }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+

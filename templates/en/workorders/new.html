@@ -1,0 +1,22 @@
+
+{% extends 'en/base.html' %}
+{% block content %}
+<h4>New Work Order</h4>
+<form method="post" class="row g-3">
+  <div class="col-md-3"><label class="form-label">Type</label>
+    <select name="type" class="form-select"><option>维修</option><option>投诉</option><option>保洁</option><option>其他</option></select></div>
+  <div class="col-md-3"><label class="form-label">Status</label>
+    <select name="status" class="form-select"><option>新建</option><option>处理中</option><option>已完成</option><option>已关闭</option></select></div>
+  <div class="col-md-3"><label class="form-label">Priority</label>
+    <select name="priority" class="form-select"><option>低</option><option selected>中</option><option>高</option></select></div>
+  <div class="col-md-3"><label class="form-label">Assignee</label><input name="assignee" class="form-control" placeholder="e.g. Wang"></div>
+  <div class="col-md-6"><label class="form-label">Owner</label>
+    <select name="owner_id" class="form-select"><option value="">--</option>{% for o in owners %}<option value="{{ o.id }}">{{ o.name }} ({{ o.unit }})</option>{% endfor %}</select></div>
+  <div class="col-md-6"><label class="form-label">Equipment</label>
+    <select name="equipment_id" class="form-select"><option value="">--</option>{% for e in equips %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}</select></div>
+  <div class="col-12"><label class="form-label">Description</label><textarea name="description" class="form-control" required></textarea></div>
+  <div class="col-12"><button class="btn btn-primary">Save</button></div>
+</form>
+{% endblock %}
+
+

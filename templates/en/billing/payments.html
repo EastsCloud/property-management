@@ -1,0 +1,42 @@
+
+{% extends 'en/base.html' %}
+{% block content %}
+<h4>Payments</h4>
+<form method="post" class="row g-2 mb-3">
+  <div class="col-md-3">
+    <label class="form-label">Owner</label>
+    <select name="owner_id" class="form-select">
+      {% for o in owners %}<option value="{{ o.id }}">{{ o.name }} ({{ o.unit }})</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Invoice (optional)</label>
+    <select name="invoice_id" class="form-select">
+      <option value="">--</option>
+      {% for i in invoices %}<option value="{{ i.id }}">#{{ i.id }} {{ i.owner.name }} ¥{{ i.amount }} Due {{ i.due_date }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2"><label class="form-label">Amount</label><input name="amount" class="form-control" required></div>
+  <div class="col-md-2"><label class="form-label">Method</label><input name="method" class="form-control" placeholder="online/offline/cash"></div>
+  <div class="col-md-2"><label class="form-label">Note</label><input name="note" class="form-control"></div>
+  <div class="col-md-12"><button class="btn btn-primary">Record Payment</button></div>
+  </form>
+
+<table class="table table-striped">
+  <thead><tr><th>ID</th><th>Time</th><th>Owner</th><th>Amount</th><th>Method</th><th>Note</th></tr></thead>
+  <tbody>
+  {% for p in payments %}
+    <tr>
+      <td>{{ p.id }}</td>
+      <td>{{ p.paid_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>{{ p.owner.name }}</td>
+      <td>¥{{ '%.2f'|format(p.amount) }}</td>
+      <td>{{ p.method }}</td>
+      <td>{{ p.note or '-' }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+

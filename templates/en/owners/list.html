@@ -1,0 +1,29 @@
+
+{% extends 'en/base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h4>Owners</h4>
+  <a class="btn btn-primary" href="{{ url_for('owners_new') }}">+ New Owner</a>
+  </div>
+<form class="row gy-2 gx-2 mb-3">
+  <div class="col-auto"><input class="form-control" name="q" placeholder="Search name/phone/unit" value="{{ q }}"></div>
+  <div class="col-auto"><button class="btn btn-outline-secondary">Search</button></div>
+</form>
+<table class="table table-hover align-middle">
+  <thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Email</th><th>Unit</th><th>Action</th></tr></thead>
+  <tbody>
+  {% for o in owners %}
+    <tr>
+      <td>{{ o.id }}</td>
+      <td>{{ o.name }}</td>
+      <td>{{ o.phone or '-' }}</td>
+      <td>{{ o.email or '-' }}</td>
+      <td>{{ o.unit or '-' }}</td>
+      <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('owners_detail', oid=o.id) }}">Detail</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+
