@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from config import Config
 from models import db, Owner, ChargeType, Invoice, Payment, Equipment, MaintenancePlan, WorkOrder, Announcement
 from datetime import datetime, date
@@ -8,12 +8,25 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 
+# language
+@app.before_request
+def set_language():
+    lang = request.args.get('lang')
+    if lang in {'en', 'zh'}:
+        session['lang'] = lang
+    session.setdefault('lang', 'zh')
+
+def render_view(template_name, **kwargs):
+    tpl = f"en/{template_name}" if session.get('lang') == 'en' else template_name
+    return render_template(tpl, **kwargs)
+
 @app.cli.command("init-db")
 def init_db():
     with app.app_context():
         db.drop_all()
         db.create_all()
-        # 种子数据
+        
+        # some data to start with
         o1 = Owner(name="张三", phone="13800001111", email="zhangsan@example.com", unit="A-2-302")
         o2 = Owner(name="李四", phone="13900002222", email="lisi@example.com", unit="B-1-101")
         ct1 = ChargeType(name="物业费", unit="月", price=2.5, description="2.5元/㎡·月")
@@ -21,7 +34,6 @@ def init_db():
         db.session.add_all([o1,o2,ct1,ct2])
         db.session.commit()
 
-        # 首月账单
         for owner in Owner.query.all():
             inv = Invoice(owner_id=owner.id, charge_type_id=ct1.id, amount=500, due_date=date.today()+relativedelta(days=15), description="2025年10月物业费")
             db.session.add(inv)
@@ -40,10 +52,9 @@ def dashboard():
     equips = Equipment.query.count()
     latest_ann = Announcement.query.order_by(Announcement.created_at.desc()).limit(5).all()
     recent_wos = WorkOrder.query.order_by(WorkOrder.created_at.desc()).limit(8).all()
-    move_outs = Owner.query.order_by(Owner.created_at.desc()).limit(10).all()  # 占位数据
-    return render_template('dashboard.html', owners=owners, unpaid=unpaid, open_wos=open_wos, equips=equips, latest_ann=latest_ann, recent_wos=recent_wos, move_outs=move_outs)
+    move_outs = Owner.query.order_by(Owner.created_at.desc()).limit(10).all()   # placeholder
+    return render_view('dashboard.html', owners=owners, unpaid=unpaid, open_wos=open_wos, equips=equips, latest_ann=latest_ann, recent_wos=recent_wos, move_outs=move_outs)
 
-# ---- 业主 CRUD ----
 @app.route('/owners')
 def owners_list():
     q = request.args.get('q','').strip()
@@ -52,7 +63,7 @@ def owners_list():
         like = f"%{q}%"
         query = query.filter((Owner.name.like(like)) | (Owner.phone.like(like)) | (Owner.unit.like(like)))
     owners = query.order_by(Owner.id.desc()).all()
-    return render_template('owners/list.html', owners=owners, q=q)
+    return render_view('owners/list.html', owners=owners, q=q)
 
 @app.route('/owners/new', methods=['GET','POST'])
 def owners_new():
@@ -69,7 +80,7 @@ def owners_new():
         db.session.commit()
         flash('已创建业主', 'success')
         return redirect(url_for('owners_list'))
-    return render_template('owners/new.html')
+    return render_view('owners/new.html')
 
 @app.route('/owners/<int:oid>', methods=['GET','POST'])
 def owners_detail(oid):
@@ -86,7 +97,7 @@ def owners_detail(oid):
     invoices = Invoice.query.filter_by(owner_id=oid).all()
     payments = Payment.query.filter_by(owner_id=oid).all()
     wos = WorkOrder.query.filter_by(owner_id=oid).all()
-    return render_template('owners/detail.html', owner=owner, invoices=invoices, payments=payments, wos=wos)
+    return render_view('owners/detail.html', owner=owner, invoices=invoices, payments=payments, wos=wos)
 
 @app.route('/owners/<int:oid>/delete', methods=['POST'])
 def owners_delete(oid):
@@ -96,7 +107,6 @@ def owners_delete(oid):
     flash('已删除', 'warning')
     return redirect(url_for('owners_list'))
 
-# ---- 收费/账单 ----
 @app.route('/billing/charge-types', methods=['GET','POST'])
 def charge_types():
     if request.method == 'POST':
@@ -104,7 +114,7 @@ def charge_types():
         db.session.add(ct); db.session.commit()
         return redirect(url_for('charge_types'))
     types = ChargeType.query.order_by(ChargeType.id.desc()).all()
-    return render_template('billing/charge_types.html', types=types)
+    return render_view('billing/charge_types.html', types=types)
 
 @app.route('/billing/invoices')
 def invoices_list():
@@ -114,7 +124,7 @@ def invoices_list():
     if status:
         query = query.filter_by(status=status)
     invoices = query.order_by(Invoice.due_date.asc()).all()
-    return render_template('billing/invoices.html', invoices=invoices, q=q, status=status)
+    return render_view('billing/invoices.html', invoices=invoices, q=q, status=status)
 
 @app.route('/billing/invoices/new', methods=['GET','POST'])
 def invoices_new():
@@ -124,7 +134,7 @@ def invoices_new():
         inv = Invoice(owner_id=int(request.form['owner_id']), charge_type_id=int(request.form['charge_type_id']), amount=float(request.form['amount']), due_date=datetime.strptime(request.form['due_date'], '%Y-%m-%d').date(), description=request.form.get('description'))
         db.session.add(inv); db.session.commit()
         return redirect(url_for('invoices_list'))
-    return render_template('billing/invoices_new.html', owners=owners, types=types)
+    return render_view('billing/invoices_new.html', owners=owners, types=types)
 
 @app.route('/billing/payments', methods=['GET','POST'])
 def payments_list():
@@ -140,9 +150,8 @@ def payments_list():
     owners = Owner.query.all()
     invoices = Invoice.query.filter(Invoice.status!="已支付").all()
     payments = Payment.query.order_by(Payment.paid_at.desc()).all()
-    return render_template('billing/payments.html', payments=payments, owners=owners, invoices=invoices)
+    return render_view('billing/payments.html', payments=payments, owners=owners, invoices=invoices)
 
-# ---- 设备/维护 ----
 @app.route('/equipment')
 def equipment_list():
     q = request.args.get('q','').strip()
@@ -151,7 +160,7 @@ def equipment_list():
         like = f"%{q}%"
         query = query.filter((Equipment.name.like(like)) | (Equipment.location.like(like)) | (Equipment.serial.like(like)))
     items = query.order_by(Equipment.id.desc()).all()
-    return render_template('equipment/list.html', items=items, q=q)
+    return render_view('equipment/list.html', items=items, q=q)
 
 @app.route('/equipment/new', methods=['GET','POST'])
 def equipment_new():
@@ -159,7 +168,7 @@ def equipment_new():
         item = Equipment(name=request.form['name'], location=request.form.get('location'), serial=request.form.get('serial'), status=request.form.get('status'), install_date=datetime.strptime(request.form['install_date'], '%Y-%m-%d').date() if request.form.get('install_date') else None)
         db.session.add(item); db.session.commit()
         return redirect(url_for('equipment_list'))
-    return render_template('equipment/new.html')
+    return render_view('equipment/new.html')
 
 @app.route('/equipment/<int:eid>', methods=['GET','POST'])
 def equipment_detail(eid):
@@ -173,7 +182,7 @@ def equipment_detail(eid):
         return redirect(url_for('equipment_detail', eid=eid))
     plans = MaintenancePlan.query.filter_by(equipment_id=eid).all()
     wos = WorkOrder.query.filter_by(equipment_id=eid).all()
-    return render_template('equipment/detail.html', eq=eq, plans=plans, wos=wos)
+    return render_view('equipment/detail.html', eq=eq, plans=plans, wos=wos)
 
 @app.route('/equipment/<int:eid>/plan/new', methods=['POST'])
 def plan_new(eid):
@@ -181,7 +190,6 @@ def plan_new(eid):
     db.session.add(plan); db.session.commit()
     return redirect(url_for('equipment_detail', eid=eid))
 
-# ---- 工单 ----
 @app.route('/workorders')
 def workorders_list():
     status = request.args.get('status','')
@@ -189,7 +197,7 @@ def workorders_list():
     if status:
         query = query.filter_by(status=status)
     wos = query.order_by(WorkOrder.created_at.desc()).all()
-    return render_template('workorders/list.html', wos=wos, status=status)
+    return render_view('workorders/list.html', wos=wos, status=status)
 
 @app.route('/workorders/new', methods=['GET','POST'])
 def workorders_new():
@@ -199,7 +207,7 @@ def workorders_new():
         wo = WorkOrder(type=request.form.get('type'), description=request.form['description'], status=request.form.get('status','新建'), priority=request.form.get('priority','中'), owner_id=int(request.form['owner_id']) if request.form.get('owner_id') else None, equipment_id=int(request.form['equipment_id']) if request.form.get('equipment_id') else None, assignee=request.form.get('assignee'))
         db.session.add(wo); db.session.commit()
         return redirect(url_for('workorders_list'))
-    return render_template('workorders/new.html', owners=owners, equips=equips)
+    return render_view('workorders/new.html', owners=owners, equips=equips)
 
 @app.route('/workorders/<int:wid>', methods=['GET','POST'])
 def workorders_detail(wid):
@@ -212,9 +220,8 @@ def workorders_detail(wid):
             wo.closed_at = datetime.utcnow()
         db.session.commit()
         return redirect(url_for('workorders_detail', wid=wid))
-    return render_template('workorders/detail.html', wo=wo)
+    return render_view('workorders/detail.html', wo=wo)
 
-# ---- 社区服务（公告） ----
 @app.route('/announcements', methods=['GET','POST'])
 def announcements():
     if request.method == 'POST':
@@ -222,7 +229,7 @@ def announcements():
         db.session.add(ann); db.session.commit()
         return redirect(url_for('announcements'))
     anns = Announcement.query.order_by(Announcement.created_at.desc()).all()
-    return render_template('announcements/list.html', anns=anns)
+    return render_view('announcements/list.html', anns=anns)
 
 if __name__ == '__main__':
     app.run(debug=True)
