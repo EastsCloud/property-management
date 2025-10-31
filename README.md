@@ -2,8 +2,10 @@
 Based on Flask + SQLAlchemy
 
 ## 版本 Versions
+
 v-1.1: 支持英语
 Supports English
+
 v-1.0
 
 包含模块：业主信息、收费管理（收费项目/账单/缴费）、设备管理（台账/维护计划）、工单管理、社区服务（公告）。
