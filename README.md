@@ -1,7 +1,10 @@
+# 物业管理系统 Property Management
+Based on Flask + SQLAlchemy
 
-# 物业管理系统 Property Management（Flask + SQLAlchemy）
+v-1.0
 
 包含模块：业主信息、收费管理（收费项目/账单/缴费）、设备管理（台账/维护计划）、工单管理、社区服务（公告）。
+Modules: Owner Information, Billing, Equipment Tracking, Work Orders, and Community Communication
 
 Available on https://property-management-blnu.onrender.com
 
