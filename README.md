@@ -1,7 +1,7 @@
 # 物业管理系统 Property Management
 Based on Flask + SQLAlchemy
 
-# 版本 Versions
+## 版本 Versions
 v-1.1: 支持英语
 Supports English
 v-1.0
