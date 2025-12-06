@@ -18,6 +18,7 @@ Based on Flask + SQLAlchemy
 ## 简介 Introduction
 
 包含模块：业主、收费（收费项目、账单、缴费记录）、设备、工单、社区服务。
+<br/>
 Modules: Owners, Billing(Charge types, Invoices, Payments), Equipment, Work Orders, and Community
 
 Available on https://property-management-blnu.onrender.com
