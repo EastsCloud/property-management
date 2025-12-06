@@ -6,8 +6,22 @@
   <div class="col-md-4"><label class="form-label">Name</label><input name="name" class="form-control" value="{{ owner.name }}" required></div>
   <div class="col-md-4"><label class="form-label">Phone</label><input name="phone" class="form-control" value="{{ owner.phone }}"></div>
   <div class="col-md-4"><label class="form-label">Email</label><input name="email" class="form-control" value="{{ owner.email }}"></div>
-  <div class="col-md-6"><label class="form-label">Unit</label><input name="unit" class="form-control" value="{{ owner.unit }}"></div>
-  <div class="col-md-6"><label class="form-label">Vehicles (JSON)</label>
+  <div class="col-md-4"><label class="form-label">Unit</label><input name="unit" class="form-control" value="{{ owner.unit }}"></div>
+  <div class="col-md-4"><label class="form-label">Area (㎡)</label><input type="number" step="0.01" name="area" class="form-control" value="{{ owner.area or '' }}"></div>
+  <div class="col-md-4"><label class="form-label">Unit Type</label>
+    <select name="unit_type" class="form-select">
+      <option value="">--</option>
+      <option {{ 'selected' if owner.unit_type=='一室一厅' else '' }}>1BR 1LR</option>
+      <option {{ 'selected' if owner.unit_type=='两室一厅' else '' }}>2BR 1LR</option>
+      <option {{ 'selected' if owner.unit_type=='两室两厅' else '' }}>2BR 2LR</option>
+      <option {{ 'selected' if owner.unit_type=='三室一厅' else '' }}>3BR 1LR</option>
+      <option {{ 'selected' if owner.unit_type=='三室两厅' else '' }}>3BR 2LR</option>
+      <option {{ 'selected' if owner.unit_type=='四室及以上' else '' }}>4BR+</option>
+    </select>
+  </div>
+  <div class="col-md-4"><label class="form-label">Vehicle Count</label><input type="number" name="vehicle_count" class="form-control" value="{{ owner.vehicle_count or 0 }}"></div>
+  <div class="col-md-4"><label class="form-label">Parking Spots</label><input name="parking_spots" class="form-control" value="{{ owner.parking_spots or '' }}" placeholder="Separate with commas"></div>
+  <div class="col-md-4"><label class="form-label">Vehicle Details (JSON)</label>
     <textarea name="vehicles_json" class="form-control">{{ owner.vehicles or '[]' }}</textarea>
   </div>
   <div class="col-12 d-flex gap-2">

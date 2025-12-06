@@ -1,19 +1,30 @@
 
 {% extends 'en/base.html' %}
 {% block content %}
-<h4>Charge Types</h4>
-<form method="post" class="row g-2 mb-3">
-  <div class="col-md-3"><input name="name" class="form-control" placeholder="Name (Property Fee etc.)" required></div>
-  <div class="col-md-2"><input name="unit" class="form-control" placeholder="Unit (e.g. Month)"></div>
-  <div class="col-md-2"><input name="price" class="form-control" placeholder="Price"></div>
-  <div class="col-md-3"><input name="description" class="form-control" placeholder="Description"></div>
-  <div class="col-md-2"><button class="btn btn-primary w-100">Add</button></div>
-</form>
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h4>Charge Types</h4>
+  <a class="btn btn-primary" href="{{ url_for('charge_types_new') }}">+ New Charge Type</a>
+</div>
 <table class="table table-striped">
-  <thead><tr><th>ID</th><th>Name</th><th>Unit</th><th>Price</th><th>Note</th></tr></thead>
+  <thead><tr><th>ID</th><th>Charge Name</th><th>Billing Cycle</th><th>Unit Price</th><th>Link To</th><th>Note</th></tr></thead>
   <tbody>
     {% for t in types %}
-      <tr><td>{{ t.id }}</td><td>{{ t.name }}</td><td>{{ t.unit }}</td><td>{{ t.price }}</td><td>{{ t.description or '-' }}</td></tr>
+      <tr>
+        <td>{{ t.id }}</td>
+        <td>{{ t.name }}</td>
+        <td>{{ t.billing_cycle or t.unit }}</td>
+        <td>¥{{ '%.2f'|format(t.price) }}</td>
+        <td>
+          {% if t.link_to == 'area' %}
+            <span class="badge bg-info">Area</span>
+          {% elif t.link_to == 'vehicles' %}
+            <span class="badge bg-warning">Vehicles</span>
+          {% else %}
+            <span class="badge bg-secondary">None</span>
+          {% endif %}
+        </td>
+        <td>{{ t.description or '-' }}</td>
+      </tr>
     {% endfor %}
   </tbody>
 </table>

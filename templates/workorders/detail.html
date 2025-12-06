@@ -14,6 +14,23 @@
       {% for p in ['低','中','高'] %}<option {{ 'selected' if wo.priority==p else '' }}>{{ p }}</option>{% endfor %}
     </select></div>
   <div class="col-md-3"><label class="form-label">负责人</label><input name="assignee" class="form-control" value="{{ wo.assignee or '' }}"></div>
+  <div class="col-md-3"><label class="form-label">维修人</label><input name="repairer" class="form-control" value="{{ wo.repairer or '' }}"></div>
+  <div class="col-md-3"><label class="form-label">派单时间</label>
+    <input type="datetime-local" name="assigned_at" class="form-control" value="{{ wo.assigned_at.strftime('%Y-%m-%dT%H:%M') if wo.assigned_at else '' }}">
+  </div>
+  <div class="col-md-3"><label class="form-label">结束时间</label>
+    <input type="datetime-local" name="completed_at" class="form-control" value="{{ wo.completed_at.strftime('%Y-%m-%dT%H:%M') if wo.completed_at else '' }}">
+  </div>
+  <div class="col-md-3"><label class="form-label">是否满意</label>
+    <select name="satisfaction" class="form-select">
+      <option value="">未评价</option>
+      <option {{ 'selected' if wo.satisfaction=='满意' else '' }}>满意</option>
+      <option {{ 'selected' if wo.satisfaction=='不满意' else '' }}>不满意</option>
+    </select>
+  </div>
+  <div class="col-md-3"><label class="form-label">创建时间</label>
+    <input type="text" class="form-control" value="{{ wo.created_at.strftime('%Y-%m-%d %H:%M') if wo.created_at else '' }}" readonly>
+  </div>
   <div class="col-12"><label class="form-label">描述</label><textarea class="form-control" disabled>{{ wo.description }}</textarea></div>
   <div class="col-12"><button class="btn btn-primary">保存</button></div>
 </form>

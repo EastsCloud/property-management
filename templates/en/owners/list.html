@@ -10,15 +10,17 @@
   <div class="col-auto"><button class="btn btn-outline-secondary">Search</button></div>
 </form>
 <table class="table table-hover align-middle">
-  <thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Email</th><th>Unit</th><th>Action</th></tr></thead>
+  <thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Unit</th><th>Area(㎡)</th><th>Unit Type</th><th>Vehicles</th><th>Action</th></tr></thead>
   <tbody>
   {% for o in owners %}
     <tr>
       <td>{{ o.id }}</td>
       <td>{{ o.name }}</td>
       <td>{{ o.phone or '-' }}</td>
-      <td>{{ o.email or '-' }}</td>
       <td>{{ o.unit or '-' }}</td>
+      <td>{{ '%.2f'|format(o.area) if o.area else '-' }}</td>
+      <td>{{ o.unit_type or '-' }}</td>
+      <td>{{ o.vehicle_count or 0 }}</td>
       <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('owners_detail', oid=o.id) }}">Detail</a></td>
     </tr>
   {% endfor %}

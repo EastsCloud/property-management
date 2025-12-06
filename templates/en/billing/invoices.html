@@ -6,16 +6,21 @@
   <a class="btn btn-primary" href="{{ url_for('invoices_new') }}">+ New Invoice</a>
 </div>
 <table class="table table-hover mt-2">
-  <thead><tr><th>ID</th><th>Owner</th><th>Type</th><th>Amount</th><th>Due Date</th><th>Status</th></tr></thead>
+  <thead><tr><th>ID</th><th>Owner</th><th>Charge Name</th><th>Billing Cycle</th><th>Unit Price</th><th>Amount (Month)</th><th>Paid</th><th>Remaining</th><th>Due Date</th><th>Status</th></tr></thead>
   <tbody>
   {% for i in invoices %}
+    {% set paid_amount = invoice_paid.get(i.id, 0) if invoice_paid else 0 %}
     <tr>
       <td>{{ i.id }}</td>
       <td><a href="{{ url_for('owners_detail', oid=i.owner_id) }}">{{ i.owner.name }}</a></td>
       <td>{{ i.charge_type.name if i.charge_type else (i.description or '-') }}</td>
+      <td>{{ i.billing_cycle or (i.charge_type.billing_cycle if i.charge_type else '-') }}</td>
+      <td>¥{{ '%.2f'|format(i.price or (i.charge_type.price if i.charge_type else 0)) }}</td>
       <td>¥{{ '%.2f'|format(i.amount) }}</td>
+      <td>¥{{ '%.2f'|format(paid_amount) }}</td>
+      <td><strong class="text-{{ 'success' if i.unpaid_amount == 0 else 'danger' }}">¥{{ '%.2f'|format(i.unpaid_amount or i.amount) }}</strong></td>
       <td>{{ i.due_date }}</td>
-      <td>{{ 'Paid' if i.status=='已支付' else i.status }}</td>
+      <td><span class="badge text-bg-{{ 'success' if i.status=='已支付' else 'warning' }}">{{ 'Paid' if i.status=='已支付' else i.status }}</span></td>
     </tr>
   {% endfor %}
   </tbody>

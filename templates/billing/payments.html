@@ -1,35 +1,31 @@
 
 {% extends 'base.html' %}
 {% block content %}
-<h4>缴费记录</h4>
-<form method="post" class="row g-2 mb-3">
-  <div class="col-md-3">
-    <label class="form-label">业主</label>
-    <select name="owner_id" class="form-select">
-      {% for o in owners %}<option value="{{ o.id }}">{{ o.name }} ({{ o.unit }})</option>{% endfor %}
-    </select>
-  </div>
-  <div class="col-md-3">
-    <label class="form-label">关联账单(可选)</label>
-    <select name="invoice_id" class="form-select">
-      <option value="">--</option>
-      {% for i in invoices %}<option value="{{ i.id }}">#{{ i.id }} {{ i.owner.name }} ¥{{ i.amount }} 到期{{ i.due_date }}</option>{% endfor %}
-    </select>
-  </div>
-  <div class="col-md-2"><label class="form-label">金额</label><input name="amount" class="form-control" required></div>
-  <div class="col-md-2"><label class="form-label">方式</label><input name="method" class="form-control" placeholder="线上/线下/现金"></div>
-  <div class="col-md-2"><label class="form-label">备注</label><input name="note" class="form-control"></div>
-  <div class="col-md-12"><button class="btn btn-primary">记录支付</button></div>
-</form>
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h4>缴费记录</h4>
+  <a class="btn btn-primary" href="{{ url_for('payments_new') }}">+ 新建缴费记录</a>
+</div>
 
 <table class="table table-striped">
-  <thead><tr><th>ID</th><th>时间</th><th>业主</th><th>金额</th><th>方式</th><th>备注</th></tr></thead>
+  <thead><tr><th>ID</th><th>时间</th><th>业主</th><th>关联账单</th><th>金额</th><th>方式</th><th>备注</th></tr></thead>
   <tbody>
   {% for p in payments %}
     <tr>
       <td>{{ p.id }}</td>
       <td>{{ p.paid_at.strftime('%Y-%m-%d %H:%M') }}</td>
       <td>{{ p.owner.name }}</td>
+      <td>
+        {% if p.invoice %}
+          <a href="{{ url_for('invoices_list') }}">#{{ p.invoice.id }}</a>
+          <br><small class="text-muted">
+            总:¥{{ '%.2f'|format(p.invoice.amount) }} | 
+            已:¥{{ '%.2f'|format(invoice_paid.get(p.invoice.id, 0)) }} | 
+            需:¥{{ '%.2f'|format(p.invoice.unpaid_amount or p.invoice.amount) }}
+          </small>
+        {% else %}
+          <span class="text-muted">--</span>
+        {% endif %}
+      </td>
       <td>¥{{ '%.2f'|format(p.amount) }}</td>
       <td>{{ p.method }}</td>
       <td>{{ p.note or '-' }}</td>

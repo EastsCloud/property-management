@@ -3,16 +3,29 @@
 {% block content %}
 <h4>设备详情 #{{ eq.id }}</h4>
 <form method="post" class="row g-3 mb-4">
-  <div class="col-md-4"><label class="form-label">名称</label><input name="name" class="form-control" value="{{ eq.name }}" required></div>
-  <div class="col-md-4"><label class="form-label">位置</label><input name="location" class="form-control" value="{{ eq.location }}"></div>
-  <div class="col-md-4"><label class="form-label">序列号</label><input name="serial" class="form-control" value="{{ eq.serial }}"></div>
-  <div class="col-md-4"><label class="form-label">状态</label>
+  <div class="col-md-3"><label class="form-label">设备名称</label><input name="name" class="form-control" value="{{ eq.name }}" required></div>
+  <div class="col-md-3"><label class="form-label">设备类型</label>
+    <select name="equipment_type" class="form-select">
+      <option value="">--</option>
+      <option {{ 'selected' if eq.equipment_type=='电梯' else '' }}>电梯</option>
+      <option {{ 'selected' if eq.equipment_type=='空调' else '' }}>空调</option>
+      <option {{ 'selected' if eq.equipment_type=='水管' else '' }}>水管</option>
+      <option {{ 'selected' if eq.equipment_type=='燃气' else '' }}>燃气</option>
+      <option {{ 'selected' if eq.equipment_type=='其他' else '' }}>其他</option>
+    </select>
+  </div>
+  <div class="col-md-3"><label class="form-label">设备型号</label><input name="model" class="form-control" value="{{ eq.model or '' }}"></div>
+  <div class="col-md-3"><label class="form-label">位置</label><input name="location" class="form-control" value="{{ eq.location }}"></div>
+  <div class="col-md-3"><label class="form-label">序列号</label><input name="serial" class="form-control" value="{{ eq.serial }}"></div>
+  <div class="col-md-3"><label class="form-label">状态</label>
     <select name="status" class="form-select">
       {% for s in ['正常','维护','停用'] %}
         <option {{ 'selected' if eq.status==s else '' }}>{{ s }}</option>
       {% endfor %}
     </select>
   </div>
+  <div class="col-md-3"><label class="form-label">安装日期</label><input type="date" name="install_date" class="form-control" value="{{ eq.install_date or '' }}"></div>
+  <div class="col-md-3"><label class="form-label">设备使用时间(年)</label><input type="number" step="0.1" class="form-control" value="{{ '%.1f'|format(eq.usage_years) if eq.usage_years else '' }}" readonly></div>
   <div class="col-12"><button class="btn btn-primary">保存</button></div>
 </form>
 
@@ -47,6 +60,44 @@
           <li class="list-group-item text-muted">暂无</li>
         {% endfor %}
       </ul>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-3">
+  <div class="col-12">
+    <div class="card mb-3">
+      <div class="card-header">维修记录</div>
+      <table class="table table-sm mb-0">
+        <thead>
+          <tr><th>维修时间</th><th>主要问题</th><th>维修费用</th><th>是否修复</th><th>是否更换</th><th>备注</th></tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+            <tr>
+              <td>{{ r.repair_date }}</td>
+              <td>{{ r.main_issue or '-' }}</td>
+              <td>¥{{ '%.2f'|format(r.repair_cost) }}</td>
+              <td><span class="badge text-bg-{{ 'success' if r.is_fixed else 'danger' }}">{{ '是' if r.is_fixed else '否' }}</span></td>
+              <td><span class="badge text-bg-{{ 'warning' if r.is_replaced else 'secondary' }}">{{ '是' if r.is_replaced else '否' }}</span></td>
+              <td>{{ r.notes or '-' }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6" class="text-muted text-center">暂无维修记录</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('maintenance_record_new', eid=eq.id) }}" class="row g-2">
+          <div class="col-md-2"><input type="date" name="repair_date" class="form-control" required></div>
+          <div class="col-md-3"><input name="main_issue" class="form-control" placeholder="主要问题"></div>
+          <div class="col-md-2"><input type="number" step="0.01" name="repair_cost" class="form-control" placeholder="维修费用"></div>
+          <div class="col-md-1"><div class="form-check mt-2"><input class="form-check-input" type="checkbox" name="is_fixed" checked><label class="form-check-label small">修复</label></div></div>
+          <div class="col-md-1"><div class="form-check mt-2"><input class="form-check-input" type="checkbox" name="is_replaced"><label class="form-check-label small">更换</label></div></div>
+          <div class="col-md-2"><input name="notes" class="form-control" placeholder="备注"></div>
+          <div class="col-md-1"><button class="btn btn-outline-primary">添加</button></div>
+        </form>
+      </div>
     </div>
   </div>
 </div>

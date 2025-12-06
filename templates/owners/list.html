@@ -10,15 +10,17 @@
   <div class="col-auto"><button class="btn btn-outline-secondary">搜索</button></div>
 </form>
 <table class="table table-hover align-middle">
-  <thead><tr><th>ID</th><th>姓名</th><th>电话</th><th>邮箱</th><th>房产</th><th>操作</th></tr></thead>
+  <thead><tr><th>ID</th><th>姓名</th><th>电话</th><th>房产</th><th>面积(㎡)</th><th>房型</th><th>车辆数</th><th>操作</th></tr></thead>
   <tbody>
   {% for o in owners %}
     <tr>
       <td>{{ o.id }}</td>
       <td>{{ o.name }}</td>
       <td>{{ o.phone or '-' }}</td>
-      <td>{{ o.email or '-' }}</td>
       <td>{{ o.unit or '-' }}</td>
+      <td>{{ '%.2f'|format(o.area) if o.area else '-' }}</td>
+      <td>{{ o.unit_type or '-' }}</td>
+      <td>{{ o.vehicle_count or 0 }}</td>
       <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('owners_detail', oid=o.id) }}">详情</a></td>
     </tr>
   {% endfor %}

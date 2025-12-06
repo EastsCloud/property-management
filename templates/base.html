@@ -28,9 +28,9 @@
             <li class="nav-item"><a class="nav-link" href="{{ url_for('announcements') }}">社区服务</a></li>
           </ul>
           <div class="d-flex">
-            <a class="nav-link text-white-50 px-2" href="?lang=zh">中文</a>
+            <a class="nav-link {{ 'text-white' if session.get('lang')=='zh' else 'text-white-50' }} px-2" href="?lang=zh">中文</a>
             <span class="text-white-50">|</span>
-            <a class="nav-link text-white px-2" href="?lang=en">English</a>
+            <a class="nav-link {{ 'text-white' if session.get('lang')=='en' else 'text-white-50' }} px-2" href="?lang=en">English</a>
           </div>
         </div>
       </div>

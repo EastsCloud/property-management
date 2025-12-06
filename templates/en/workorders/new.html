@@ -10,6 +10,10 @@
   <div class="col-md-3"><label class="form-label">Priority</label>
     <select name="priority" class="form-select"><option>低</option><option selected>中</option><option>高</option></select></div>
   <div class="col-md-3"><label class="form-label">Assignee</label><input name="assignee" class="form-control" placeholder="e.g. Wang"></div>
+  <div class="col-md-3"><label class="form-label">Repairer</label><input name="repairer" class="form-control" placeholder="e.g. Li"></div>
+  <div class="col-md-3"><label class="form-label">Assigned At</label>
+    <input type="datetime-local" name="assigned_at" class="form-control">
+  </div>
   <div class="col-md-6"><label class="form-label">Owner</label>
     <select name="owner_id" class="form-select"><option value="">--</option>{% for o in owners %}<option value="{{ o.id }}">{{ o.name }} ({{ o.unit }})</option>{% endfor %}</select></div>
   <div class="col-md-6"><label class="form-label">Equipment</label>

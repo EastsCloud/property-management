@@ -3,15 +3,26 @@
 {% block content %}
 <h4>新建设备</h4>
 <form method="post" class="row g-3">
-  <div class="col-md-4"><label class="form-label">名称</label><input name="name" class="form-control" required></div>
-  <div class="col-md-4"><label class="form-label">位置</label><input name="location" class="form-control"></div>
-  <div class="col-md-4"><label class="form-label">序列号</label><input name="serial" class="form-control"></div>
-  <div class="col-md-4"><label class="form-label">状态</label>
+  <div class="col-md-3"><label class="form-label">设备名称</label><input name="name" class="form-control" required></div>
+  <div class="col-md-3"><label class="form-label">设备类型</label>
+    <select name="equipment_type" class="form-select">
+      <option value="">--</option>
+      <option>电梯</option>
+      <option>空调</option>
+      <option>水管</option>
+      <option>燃气</option>
+      <option>其他</option>
+    </select>
+  </div>
+  <div class="col-md-3"><label class="form-label">设备型号</label><input name="model" class="form-control"></div>
+  <div class="col-md-3"><label class="form-label">位置</label><input name="location" class="form-control"></div>
+  <div class="col-md-3"><label class="form-label">序列号</label><input name="serial" class="form-control"></div>
+  <div class="col-md-3"><label class="form-label">状态</label>
     <select name="status" class="form-select">
       <option>正常</option><option>维护</option><option>停用</option>
     </select>
   </div>
-  <div class="col-md-4"><label class="form-label">安装日期</label><input type="date" name="install_date" class="form-control"></div>
+  <div class="col-md-3"><label class="form-label">安装日期</label><input type="date" name="install_date" class="form-control"></div>
   <div class="col-12"><button class="btn btn-primary">保存</button></div>
 </form>
 {% endblock %}

@@ -3,16 +3,29 @@
 {% block content %}
 <h4>Equipment #{{ eq.id }}</h4>
 <form method="post" class="row g-3 mb-4">
-  <div class="col-md-4"><label class="form-label">Name</label><input name="name" class="form-control" value="{{ eq.name }}" required></div>
-  <div class="col-md-4"><label class="form-label">Location</label><input name="location" class="form-control" value="{{ eq.location }}"></div>
-  <div class="col-md-4"><label class="form-label">Serial</label><input name="serial" class="form-control" value="{{ eq.serial }}"></div>
-  <div class="col-md-4"><label class="form-label">Status</label>
+  <div class="col-md-3"><label class="form-label">Equipment Name</label><input name="name" class="form-control" value="{{ eq.name }}" required></div>
+  <div class="col-md-3"><label class="form-label">Equipment Type</label>
+    <select name="equipment_type" class="form-select">
+      <option value="">--</option>
+      <option {{ 'selected' if eq.equipment_type=='电梯' else '' }}>Elevator</option>
+      <option {{ 'selected' if eq.equipment_type=='空调' else '' }}>Air Conditioner</option>
+      <option {{ 'selected' if eq.equipment_type=='水管' else '' }}>Water Pipe</option>
+      <option {{ 'selected' if eq.equipment_type=='燃气' else '' }}>Gas</option>
+      <option {{ 'selected' if eq.equipment_type=='其他' else '' }}>Other</option>
+    </select>
+  </div>
+  <div class="col-md-3"><label class="form-label">Model</label><input name="model" class="form-control" value="{{ eq.model or '' }}"></div>
+  <div class="col-md-3"><label class="form-label">Location</label><input name="location" class="form-control" value="{{ eq.location }}"></div>
+  <div class="col-md-3"><label class="form-label">Serial</label><input name="serial" class="form-control" value="{{ eq.serial }}"></div>
+  <div class="col-md-3"><label class="form-label">Status</label>
     <select name="status" class="form-select">
       {% for s in ['正常','维护','停用'] %}
         <option {{ 'selected' if eq.status==s else '' }}>{{ s }}</option>
       {% endfor %}
     </select>
   </div>
+  <div class="col-md-3"><label class="form-label">Install Date</label><input type="date" name="install_date" class="form-control" value="{{ eq.install_date or '' }}"></div>
+  <div class="col-md-3"><label class="form-label">Usage Years</label><input type="number" step="0.1" class="form-control" value="{{ '%.1f'|format(eq.usage_years) if eq.usage_years else '' }}" readonly></div>
   <div class="col-12"><button class="btn btn-primary">Save</button></div>
 </form>
 
@@ -47,6 +60,44 @@
           <li class="list-group-item text-muted">None</li>
         {% endfor %}
       </ul>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-3">
+  <div class="col-12">
+    <div class="card mb-3">
+      <div class="card-header">Maintenance Records</div>
+      <table class="table table-sm mb-0">
+        <thead>
+          <tr><th>Repair Date</th><th>Main Issue</th><th>Cost</th><th>Fixed</th><th>Replaced</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+            <tr>
+              <td>{{ r.repair_date }}</td>
+              <td>{{ r.main_issue or '-' }}</td>
+              <td>¥{{ '%.2f'|format(r.repair_cost) }}</td>
+              <td><span class="badge text-bg-{{ 'success' if r.is_fixed else 'danger' }}">{{ 'Yes' if r.is_fixed else 'No' }}</span></td>
+              <td><span class="badge text-bg-{{ 'warning' if r.is_replaced else 'secondary' }}">{{ 'Yes' if r.is_replaced else 'No' }}</span></td>
+              <td>{{ r.notes or '-' }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="6" class="text-muted text-center">No maintenance records</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('maintenance_record_new', eid=eq.id) }}" class="row g-2">
+          <div class="col-md-2"><input type="date" name="repair_date" class="form-control" required></div>
+          <div class="col-md-3"><input name="main_issue" class="form-control" placeholder="Main Issue"></div>
+          <div class="col-md-2"><input type="number" step="0.01" name="repair_cost" class="form-control" placeholder="Cost"></div>
+          <div class="col-md-1"><div class="form-check mt-2"><input class="form-check-input" type="checkbox" name="is_fixed" checked><label class="form-check-label small">Fixed</label></div></div>
+          <div class="col-md-1"><div class="form-check mt-2"><input class="form-check-input" type="checkbox" name="is_replaced"><label class="form-check-label small">Replaced</label></div></div>
+          <div class="col-md-2"><input name="notes" class="form-control" placeholder="Notes"></div>
+          <div class="col-md-1"><button class="btn btn-outline-primary">Add</button></div>
+        </form>
+      </div>
     </div>
   </div>
 </div>

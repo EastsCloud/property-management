@@ -1,19 +1,30 @@
 
 {% extends 'base.html' %}
 {% block content %}
-<h4>收费项目</h4>
-<form method="post" class="row g-2 mb-3">
-  <div class="col-md-3"><input name="name" class="form-control" placeholder="名称(物业费等)" required></div>
-  <div class="col-md-2"><input name="unit" class="form-control" placeholder="计费单位(如 月)"></div>
-  <div class="col-md-2"><input name="price" class="form-control" placeholder="单价"></div>
-  <div class="col-md-3"><input name="description" class="form-control" placeholder="描述"></div>
-  <div class="col-md-2"><button class="btn btn-primary w-100">添加</button></div>
-</form>
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h4>收费项目</h4>
+  <a class="btn btn-primary" href="{{ url_for('charge_types_new') }}">+ 新建收费项目</a>
+</div>
 <table class="table table-striped">
-  <thead><tr><th>ID</th><th>名称</th><th>计费单位</th><th>单价</th><th>说明</th></tr></thead>
+  <thead><tr><th>ID</th><th>费用名称</th><th>计费周期</th><th>单价</th><th>关联信息</th><th>说明</th></tr></thead>
   <tbody>
     {% for t in types %}
-      <tr><td>{{ t.id }}</td><td>{{ t.name }}</td><td>{{ t.unit }}</td><td>{{ t.price }}</td><td>{{ t.description or '-' }}</td></tr>
+      <tr>
+        <td>{{ t.id }}</td>
+        <td>{{ t.name }}</td>
+        <td>{{ t.billing_cycle or t.unit }}</td>
+        <td>¥{{ '%.2f'|format(t.price) }}</td>
+        <td>
+          {% if t.link_to == 'area' %}
+            <span class="badge bg-info">房屋面积</span>
+          {% elif t.link_to == 'vehicles' %}
+            <span class="badge bg-warning">车辆数量</span>
+          {% else %}
+            <span class="badge bg-secondary">无关联</span>
+          {% endif %}
+        </td>
+        <td>{{ t.description or '-' }}</td>
+      </tr>
     {% endfor %}
   </tbody>
 </table>

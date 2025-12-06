@@ -5,19 +5,71 @@
 <form method="post" class="row g-3">
   <div class="col-md-4">
     <label class="form-label">业主</label>
-    <select name="owner_id" class="form-select">
-      {% for o in owners %}<option value="{{ o.id }}">{{ o.name }} ({{ o.unit }})</option>{% endfor %}
+    <select name="owner_id" id="owner_id" class="form-select" required>
+      {% for o in owners %}<option value="{{ o.id }}" data-area="{{ o.area or 0 }}" data-vehicles="{{ o.vehicle_count or 0 }}">{{ o.name }} ({{ o.unit }})</option>{% endfor %}
     </select>
   </div>
   <div class="col-md-4">
     <label class="form-label">收费项目</label>
-    <select name="charge_type_id" class="form-select">
-      {% for t in types %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
+    <select name="charge_type_id" id="charge_type_id" class="form-select" required>
+      {% for t in types %}<option value="{{ t.id }}" data-price="{{ t.price }}" data-cycle="{{ t.billing_cycle or '月' }}">{{ t.name }}</option>{% endfor %}
     </select>
   </div>
-  <div class="col-md-4"><label class="form-label">金额</label><input name="amount" class="form-control" required></div>
-  <div class="col-md-4"><label class="form-label">到期日</label><input type="date" name="due_date" class="form-control" required></div>
-  <div class="col-md-8"><label class="form-label">备注</label><input name="description" class="form-control"></div>
+  <div class="col-md-4">
+    <label class="form-label">计费周期</label>
+    <input name="billing_cycle" id="billing_cycle" class="form-control" readonly>
+  </div>
+  <div class="col-md-4"><label class="form-label">单价</label><input type="number" step="0.01" name="price" id="price" class="form-control" required placeholder="自动从收费项目获取"></div>
+  <div class="col-md-4"><label class="form-label">费用金额(月)</label><input type="number" step="0.01" name="amount" id="amount" class="form-control" readonly></div>
+  <div class="col-md-4"><label class="form-label">关联信息</label>
+    <input type="text" id="related_info" class="form-control" readonly placeholder="自动关联业主信息">
+  </div>
+  <div class="col-md-3"><label class="form-label">到期日</label><input type="date" name="due_date" class="form-control" required></div>
+  <div class="col-md-12"><label class="form-label">备注</label><input name="description" class="form-control"></div>
   <div class="col-12"><button class="btn btn-primary">保存</button></div>
 </form>
+<script>
+document.getElementById('owner_id').addEventListener('change', calculateAmount);
+document.getElementById('charge_type_id').addEventListener('change', calculateAmount);
+document.getElementById('price').addEventListener('input', calculateAmount);
+
+function calculateAmount() {
+  const ownerSelect = document.getElementById('owner_id');
+  const typeSelect = document.getElementById('charge_type_id');
+  const priceInput = document.getElementById('price');
+  const amountInput = document.getElementById('amount');
+  const cycleInput = document.getElementById('billing_cycle');
+  const relatedInfoInput = document.getElementById('related_info');
+  
+  const selectedOwner = ownerSelect.options[ownerSelect.selectedIndex];
+  const selectedType = typeSelect.options[typeSelect.selectedIndex];
+  const typeName = selectedType.text.toLowerCase();
+  
+  // 设置计费周期
+  cycleInput.value = selectedType.dataset.cycle || '月';
+  
+  // 自动设置单价（从收费项目获取，但可以修改）
+  priceInput.value = selectedType.dataset.price || 0;
+  
+  // 计算计费数量并显示关联信息
+  let quantity = 0;
+  let relatedInfo = '';
+  if (typeName.includes('物业') || typeName.includes('property')) {
+    quantity = parseFloat(selectedOwner.dataset.area) || 0;
+    relatedInfo = `房屋面积: ${quantity}㎡`;
+  } else if (typeName.includes('停车') || typeName.includes('parking')) {
+    quantity = parseFloat(selectedOwner.dataset.vehicles) || 0;
+    relatedInfo = `车辆数量: ${quantity}辆`;
+  } else {
+    quantity = 1;
+    relatedInfo = '其他类型';
+  }
+  relatedInfoInput.value = relatedInfo;
+  
+  // 计算金额
+  const price = parseFloat(priceInput.value) || 0;
+  amountInput.value = (price * quantity).toFixed(2);
+}
+calculateAmount();
+</script>
 {% endblock %}

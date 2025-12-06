@@ -6,8 +6,22 @@
   <div class="col-md-4"><label class="form-label">姓名</label><input name="name" class="form-control" value="{{ owner.name }}" required></div>
   <div class="col-md-4"><label class="form-label">电话</label><input name="phone" class="form-control" value="{{ owner.phone }}"></div>
   <div class="col-md-4"><label class="form-label">邮箱</label><input name="email" class="form-control" value="{{ owner.email }}"></div>
-  <div class="col-md-6"><label class="form-label">房产</label><input name="unit" class="form-control" value="{{ owner.unit }}"></div>
-  <div class="col-md-6"><label class="form-label">车辆( JSON )</label>
+  <div class="col-md-4"><label class="form-label">房产</label><input name="unit" class="form-control" value="{{ owner.unit }}"></div>
+  <div class="col-md-4"><label class="form-label">房屋面积(㎡)</label><input type="number" step="0.01" name="area" class="form-control" value="{{ owner.area or '' }}"></div>
+  <div class="col-md-4"><label class="form-label">房型</label>
+    <select name="unit_type" class="form-select">
+      <option value="">--</option>
+      <option {{ 'selected' if owner.unit_type=='一室一厅' else '' }}>一室一厅</option>
+      <option {{ 'selected' if owner.unit_type=='两室一厅' else '' }}>两室一厅</option>
+      <option {{ 'selected' if owner.unit_type=='两室两厅' else '' }}>两室两厅</option>
+      <option {{ 'selected' if owner.unit_type=='三室一厅' else '' }}>三室一厅</option>
+      <option {{ 'selected' if owner.unit_type=='三室两厅' else '' }}>三室两厅</option>
+      <option {{ 'selected' if owner.unit_type=='四室及以上' else '' }}>四室及以上</option>
+    </select>
+  </div>
+  <div class="col-md-4"><label class="form-label">车辆数量</label><input type="number" name="vehicle_count" class="form-control" value="{{ owner.vehicle_count or 0 }}"></div>
+  <div class="col-md-4"><label class="form-label">车位编号</label><input name="parking_spots" class="form-control" value="{{ owner.parking_spots or '' }}" placeholder="多个用逗号分隔"></div>
+  <div class="col-md-4"><label class="form-label">车辆详情( JSON )</label>
     <textarea name="vehicles_json" class="form-control">{{ owner.vehicles or '[]' }}</textarea>
   </div>
   <div class="col-12 d-flex gap-2">

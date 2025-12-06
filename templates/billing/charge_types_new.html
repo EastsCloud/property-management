@@ -1,0 +1,33 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<h4>新建收费项目</h4>
+<form method="post" class="row g-3">
+  <div class="col-md-4"><label class="form-label">费用名称</label><input name="name" class="form-control" placeholder="如：物业费、停车费" required></div>
+  <div class="col-md-4">
+    <label class="form-label">计费周期</label>
+    <select name="billing_cycle" class="form-select" required>
+      <option value="日">日</option>
+      <option value="周">周</option>
+      <option value="月" selected>月</option>
+      <option value="季">季</option>
+      <option value="年">年</option>
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">关联业主信息</label>
+    <select name="link_to" class="form-select" required>
+      <option value="none">无关联</option>
+      <option value="area">房屋面积</option>
+      <option value="vehicles">车辆数量</option>
+    </select>
+  </div>
+  <div class="col-md-6"><label class="form-label">单价</label><input name="price" type="number" step="0.01" class="form-control" placeholder="如：2.5（物业费）或 300（停车费）" required></div>
+  <div class="col-md-6"><label class="form-label">说明</label><input name="description" class="form-control" placeholder="如：2.5元/㎡·月"></div>
+  <div class="col-12">
+    <button class="btn btn-primary">保存</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('charge_types') }}">取消</a>
+  </div>
+</form>
+{% endblock %}
+
