@@ -3,7 +3,7 @@ Based on Flask + SQLAlchemy
 
 ## 版本 Versions
 
-### v-2.0
+### v-1.2
 
 **Updates**: 业主模块扩展增强，包括收费、设备、工单，界面统一优化 Enhanced Owners modules, including Billing, Equipment, and Workorders; UI improved with more consistency
 <br/>
