@@ -26,6 +26,7 @@
             <li class="nav-item"><a class="nav-link" href="{{ url_for('equipment_list') }}">设备</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ url_for('workorders_list') }}">工单</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ url_for('announcements') }}">社区服务</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('analytics_dashboard') }}">数据分析</a></li>
           </ul>
           <div class="d-flex">
             <a class="nav-link {{ 'text-white' if session.get('lang')=='zh' else 'text-white-50' }} px-2" href="?lang=zh">中文</a>

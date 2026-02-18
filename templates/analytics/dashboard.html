@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>数据分析</h4>
+</div>
+
+<div class="row mb-3">
+  <div class="col-md-4">
+    <label class="form-label fw-bold">数据类别</label>
+    <select id="dataCategory" class="form-select" onchange="onCategoryChange()">
+      <option value="billing">收费与账单</option>
+      <option value="equipment">设备管理</option>
+      <option value="workorder">工单管理</option>
+      <option value="owner">业主信息</option>
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label fw-bold">分析指标</label>
+    <select id="dataMetric" class="form-select" onchange="loadChart()">
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label fw-bold">图表类型</label>
+    <select id="chartType" class="form-select" onchange="loadChart()">
+      <option value="bar">柱状图</option>
+      <option value="pie">饼图</option>
+      <option value="doughnut">环形图</option>
+      <option value="line">折线图</option>
+      <option value="polarArea">极区图</option>
+      <option value="radar">雷达图</option>
+    </select>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div id="chartTitle" class="text-center fw-bold fs-5 mb-3"></div>
+    <div style="position:relative; height:450px;">
+      <canvas id="mainChart"></canvas>
+    </div>
+    <div id="noDataMsg" class="text-center text-muted py-5 d-none">
+      <i class="fs-1">&#128202;</i>
+      <p class="mt-2">暂无数据，请先在系统中录入相关信息</p>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4" id="summaryCards">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const metrics = {
+  billing: [
+    {value: 'revenue', label: '收入趋势（按月）', url: '/api/analytics/revenue', defaultChart: 'line'},
+    {value: 'invoice_status', label: '账单状态分布', url: '/api/analytics/invoice_status', defaultChart: 'pie'},
+    {value: 'charge_type_revenue', label: '各收费项目收入对比', url: '/api/analytics/charge_type_revenue', defaultChart: 'bar'},
+    {value: 'unpaid_overview', label: '业主欠费情况', url: '/api/analytics/unpaid_overview', defaultChart: 'bar'},
+    {value: 'payment_method', label: '缴费方式分布', url: '/api/analytics/payment_method', defaultChart: 'doughnut'}
+  ],
+  equipment: [
+    {value: 'equipment_status', label: '设备状态分布', url: '/api/analytics/equipment_status', defaultChart: 'pie'},
+    {value: 'equipment_type', label: '设备类型分布', url: '/api/analytics/equipment_type', defaultChart: 'doughnut'},
+    {value: 'maintenance_cost', label: '维修费用趋势', url: '/api/analytics/maintenance_cost', defaultChart: 'line'}
+  ],
+  workorder: [
+    {value: 'workorder_status', label: '工单状态分布', url: '/api/analytics/workorder_status', defaultChart: 'pie'},
+    {value: 'workorder_type', label: '工单类型分布', url: '/api/analytics/workorder_type', defaultChart: 'doughnut'},
+    {value: 'workorder_satisfaction', label: '工单满意度', url: '/api/analytics/workorder_satisfaction', defaultChart: 'pie'}
+  ],
+  owner: [
+    {value: 'owner_area', label: '房屋面积分布', url: '/api/analytics/owner_area', defaultChart: 'bar'}
+  ]
+};
+
+const colorPalette = [
+  'rgba(54, 162, 235, 0.8)',
+  'rgba(255, 99, 132, 0.8)',
+  'rgba(255, 206, 86, 0.8)',
+  'rgba(75, 192, 192, 0.8)',
+  'rgba(153, 102, 255, 0.8)',
+  'rgba(255, 159, 64, 0.8)',
+  'rgba(46, 204, 113, 0.8)',
+  'rgba(231, 76, 60, 0.8)',
+  'rgba(52, 73, 94, 0.8)',
+  'rgba(241, 196, 15, 0.8)'
+];
+
+const borderPalette = colorPalette.map(c => c.replace('0.8', '1'));
+
+let chartInstance = null;
+
+function onCategoryChange() {
+  const cat = document.getElementById('dataCategory').value;
+  const metricSelect = document.getElementById('dataMetric');
+  metricSelect.innerHTML = '';
+  metrics[cat].forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.value;
+    opt.textContent = m.label;
+    metricSelect.appendChild(opt);
+  });
+  // set default chart type
+  const firstMetric = metrics[cat][0];
+  if (firstMetric) {
+    document.getElementById('chartType').value = firstMetric.defaultChart;
+  }
+  loadChart();
+}
+
+function getSelectedMetric() {
+  const cat = document.getElementById('dataCategory').value;
+  const val = document.getElementById('dataMetric').value;
+  return metrics[cat].find(m => m.value === val);
+}
+
+async function loadChart() {
+  const metric = getSelectedMetric();
+  if (!metric) return;
+
+  const chartType = document.getElementById('chartType').value;
+  document.getElementById('chartTitle').textContent = metric.label;
+
+  try {
+    const resp = await fetch(metric.url);
+    const json = await resp.json();
+
+    const noData = document.getElementById('noDataMsg');
+    const canvas = document.getElementById('mainChart');
+
+    if (!json.labels || json.labels.length === 0) {
+      noData.classList.remove('d-none');
+      canvas.style.display = 'none';
+      if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+      updateSummary(metric, json);
+      return;
+    }
+
+    noData.classList.add('d-none');
+    canvas.style.display = 'block';
+
+    if (chartInstance) { chartInstance.destroy(); }
+
+    const bgColors = json.labels.map((_, i) => colorPalette[i % colorPalette.length]);
+    const bdColors = json.labels.map((_, i) => borderPalette[i % borderPalette.length]);
+
+    const isLine = (chartType === 'line');
+    const dataset = {
+      label: metric.label,
+      data: json.data,
+      backgroundColor: isLine ? colorPalette[0] : bgColors,
+      borderColor: isLine ? borderPalette[0] : bdColors,
+      borderWidth: isLine ? 2 : 1,
+      tension: 0.3,
+      fill: isLine
+    };
+
+    chartInstance = new Chart(canvas, {
+      type: chartType,
+      data: { labels: json.labels, datasets: [dataset] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: ['pie','doughnut','polarArea','radar'].includes(chartType),
+            position: 'bottom'
+          },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                let val = ctx.parsed.y !== undefined ? ctx.parsed.y : ctx.parsed;
+                if (typeof val === 'object') val = ctx.raw;
+                if (metric.value.includes('revenue') || metric.value.includes('cost') || metric.value.includes('unpaid')) {
+                  return ctx.label + ': ¥' + Number(val).toLocaleString();
+                }
+                return ctx.label + ': ' + val;
+              }
+            }
+          }
+        },
+        scales: ['pie','doughnut','polarArea','radar'].includes(chartType) ? {} : {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+    updateSummary(metric, json);
+  } catch (e) {
+    console.error('加载图表失败:', e);
+  }
+}
+
+function updateSummary(metric, json) {
+  const container = document.getElementById('summaryCards');
+  if (!json.data || json.data.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  const total = json.data.reduce((a, b) => a + b, 0);
+  const max = Math.max(...json.data);
+  const maxLabel = json.labels[json.data.indexOf(max)];
+  const count = json.data.length;
+
+  const isMoney = metric.value.includes('revenue') || metric.value.includes('cost') || metric.value.includes('unpaid');
+  const fmtTotal = isMoney ? '¥' + total.toLocaleString() : total;
+  const fmtMax = isMoney ? '¥' + max.toLocaleString() : max;
+
+  container.innerHTML = `
+    <div class="col-md-4">
+      <div class="card text-bg-primary mb-2">
+        <div class="card-body text-center">
+          <div class="small">合计</div>
+          <div class="fs-4 fw-bold">${fmtTotal}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-bg-success mb-2">
+        <div class="card-body text-center">
+          <div class="small">最高项</div>
+          <div class="fs-4 fw-bold">${maxLabel}: ${fmtMax}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-bg-info mb-2">
+        <div class="card-body text-center">
+          <div class="small">分类数</div>
+          <div class="fs-4 fw-bold">${count}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// init
+onCategoryChange();
+</script>
+{% endblock %}

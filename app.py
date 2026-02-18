@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from config import Config
 from models import db, Owner, ChargeType, Invoice, Payment, Equipment, MaintenancePlan, WorkOrder, Announcement, MaintenanceRecord
 from datetime import datetime, date
@@ -435,6 +435,144 @@ def announcements():
         return redirect(url_for('announcements'))
     anns = Announcement.query.order_by(Announcement.created_at.desc()).all()
     return render_view('announcements/list.html', anns=anns)
+
+## ===== 数据分析 Analytics =====
+
+@app.route('/analytics')
+def analytics_dashboard():
+    return render_view('analytics/dashboard.html')
+
+@app.route('/api/analytics/revenue')
+def api_analytics_revenue():
+    """收入趋势：按月汇总已支付金额"""
+    from sqlalchemy import func, extract
+    results = db.session.query(
+        extract('year', Payment.paid_at).label('year'),
+        extract('month', Payment.paid_at).label('month'),
+        func.sum(Payment.amount).label('total')
+    ).group_by('year', 'month').order_by('year', 'month').all()
+    labels = [f"{int(r.year)}-{int(r.month):02d}" for r in results]
+    data = [round(r.total, 2) for r in results]
+    return jsonify(labels=labels, data=data)
+
+@app.route('/api/analytics/invoice_status')
+def api_analytics_invoice_status():
+    """账单状态分布"""
+    from sqlalchemy import func
+    results = db.session.query(Invoice.status, func.count(Invoice.id)).group_by(Invoice.status).all()
+    labels = [r[0] for r in results]
+    data = [r[1] for r in results]
+    return jsonify(labels=labels, data=data)
+
+@app.route('/api/analytics/charge_type_revenue')
+def api_analytics_charge_type_revenue():
+    """各收费项目收入对比"""
+    from sqlalchemy import func
+    results = db.session.query(
+        ChargeType.name,
+        func.sum(Invoice.amount).label('total')
+    ).join(Invoice, Invoice.charge_type_id == ChargeType.id
+    ).group_by(ChargeType.name).all()
+    labels = [r[0] for r in results]
+    data = [round(r.total, 2) for r in results]
+    return jsonify(labels=labels, data=data)
+
+@app.route('/api/analytics/equipment_status')
+def api_analytics_equipment_status():
+    """设备状态分布"""
+    from sqlalchemy import func
+    results = db.session.query(Equipment.status, func.count(Equipment.id)).group_by(Equipment.status).all()
+    labels = [r[0] for r in results]
+    data = [r[1] for r in results]
+    return jsonify(labels=labels, data=data)
+
+@app.route('/api/analytics/equipment_type')
+def api_analytics_equipment_type():
+    """设备类型分布"""
+    from sqlalchemy import func
+    results = db.session.query(Equipment.equipment_type, func.count(Equipment.id)).group_by(Equipment.equipment_type).all()
+    labels = [r[0] or '未分类' for r in results]
+    data = [r[1] for r in results]
+    return jsonify(labels=labels, data=data)
+
+@app.route('/api/analytics/workorder_status')
+def api_analytics_workorder_status():
+    """工单状态分布"""
+    from sqlalchemy import func
+    results = db.session.query(WorkOrder.status, func.count(WorkOrder.id)).group_by(WorkOrder.status).all()
+    labels = [r[0] for r in results]
+    data = [r[1] for r in results]
+    return jsonify(labels=labels, data=data)
+
+@app.route('/api/analytics/workorder_type')
+def api_analytics_workorder_type():
+    """工单类型分布"""
+    from sqlalchemy import func
+    results = db.session.query(WorkOrder.type, func.count(WorkOrder.id)).group_by(WorkOrder.type).all()
+    labels = [r[0] or '未分类' for r in results]
+    data = [r[1] for r in results]
+    return jsonify(labels=labels, data=data)
+
+@app.route('/api/analytics/workorder_satisfaction')
+def api_analytics_workorder_satisfaction():
+    """工单满意度分布"""
+    from sqlalchemy import func
+    results = db.session.query(WorkOrder.satisfaction, func.count(WorkOrder.id)).filter(
+        WorkOrder.satisfaction.isnot(None), WorkOrder.satisfaction != ''
+    ).group_by(WorkOrder.satisfaction).all()
+    labels = [r[0] for r in results]
+    data = [r[1] for r in results]
+    return jsonify(labels=labels, data=data)
+
+@app.route('/api/analytics/owner_area')
+def api_analytics_owner_area():
+    """业主房屋面积分布"""
+    owners = Owner.query.all()
+    buckets = {'<60㎡': 0, '60-90㎡': 0, '90-120㎡': 0, '120-150㎡': 0, '>150㎡': 0}
+    for o in owners:
+        a = o.area or 0
+        if a < 60: buckets['<60㎡'] += 1
+        elif a < 90: buckets['60-90㎡'] += 1
+        elif a < 120: buckets['90-120㎡'] += 1
+        elif a < 150: buckets['120-150㎡'] += 1
+        else: buckets['>150㎡'] += 1
+    return jsonify(labels=list(buckets.keys()), data=list(buckets.values()))
+
+@app.route('/api/analytics/payment_method')
+def api_analytics_payment_method():
+    """缴费方式分布"""
+    from sqlalchemy import func
+    results = db.session.query(Payment.method, func.count(Payment.id)).group_by(Payment.method).all()
+    labels = [r[0] or '未知' for r in results]
+    data = [r[1] for r in results]
+    return jsonify(labels=labels, data=data)
+
+@app.route('/api/analytics/maintenance_cost')
+def api_analytics_maintenance_cost():
+    """维修费用趋势"""
+    from sqlalchemy import func, extract
+    results = db.session.query(
+        extract('year', MaintenanceRecord.repair_date).label('year'),
+        extract('month', MaintenanceRecord.repair_date).label('month'),
+        func.sum(MaintenanceRecord.repair_cost).label('total')
+    ).group_by('year', 'month').order_by('year', 'month').all()
+    labels = [f"{int(r.year)}-{int(r.month):02d}" for r in results]
+    data = [round(r.total, 2) for r in results]
+    return jsonify(labels=labels, data=data)
+
+@app.route('/api/analytics/unpaid_overview')
+def api_analytics_unpaid_overview():
+    """各业主欠费情况"""
+    from sqlalchemy import func
+    results = db.session.query(
+        Owner.name,
+        func.sum(Invoice.unpaid_amount).label('unpaid')
+    ).join(Invoice, Invoice.owner_id == Owner.id
+    ).filter(Invoice.unpaid_amount > 0
+    ).group_by(Owner.name).all()
+    labels = [r[0] for r in results]
+    data = [round(r.unpaid, 2) for r in results]
+    return jsonify(labels=labels, data=data)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -3,6 +3,10 @@ Based on Flask + SQLAlchemy
 
 ## 版本 Versions
 
+### v-2.0
+
+**Updates**: 新增数据分析模块，支持多维度图表展示与切换 Added Data Analytics module with interactive multi-metric charts
+
 ### v-1.2
 
 **Updates**: 业主模块扩展增强，包括收费、设备、工单，界面统一优化 Enhanced Owners modules, including Billing, Equipment, and Workorders; UI improved with more consistency
@@ -18,7 +22,6 @@ Based on Flask + SQLAlchemy
 ## 简介 Introduction
 
 包含模块：业主、收费（收费项目、账单、缴费记录）、设备、工单、社区服务。
-<br/>
 Modules: Owners, Billing(Charge types, Invoices, Payments), Equipment, Work Orders, and Community
 
 Available on https://property-management-blnu.onrender.com
