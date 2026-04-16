@@ -1,0 +1,29 @@
+
+{% extends 'en/base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h4>Equipment Registry</h4>
+  <a class="btn btn-primary" href="{{ url_for('equipment_new') }}">+ New Equipment</a>
+</div>
+<form class="row gy-2 gx-2 mb-3">
+  <div class="col-auto"><input class="form-control" name="q" placeholder="Search name/location/serial" value="{{ q }}"></div>
+  <div class="col-auto"><button class="btn btn-outline-secondary">Search</button></div>
+</form>
+<table class="table table-hover">
+  <thead><tr><th>ID</th><th>Name</th><th>Location</th><th>Serial</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for e in items %}
+    <tr>
+      <td>{{ e.id }}</td>
+      <td>{{ e.name }}</td>
+      <td>{{ e.location or '-' }}</td>
+      <td>{{ e.serial or '-' }}</td>
+      <td>{{ e.status }}</td>
+      <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('equipment_detail', eid=e.id) }}">Detail</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+

@@ -1,0 +1,239 @@
+{% extends "en/base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Data Analytics</h4>
+</div>
+
+<div class="row mb-3">
+  <div class="col-md-4">
+    <label class="form-label fw-bold">Data Category</label>
+    <select id="dataCategory" class="form-select" onchange="onCategoryChange()">
+      <option value="billing">Billing & Invoices</option>
+      <option value="equipment">Equipment</option>
+      <option value="workorder">Work Orders</option>
+      <option value="owner">Owners</option>
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label fw-bold">Metric</label>
+    <select id="dataMetric" class="form-select" onchange="loadChart()">
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label fw-bold">Chart Type</label>
+    <select id="chartType" class="form-select" onchange="loadChart()">
+      <option value="bar">Bar Chart</option>
+      <option value="pie">Pie Chart</option>
+      <option value="doughnut">Doughnut Chart</option>
+      <option value="line">Line Chart</option>
+      <option value="polarArea">Polar Area</option>
+      <option value="radar">Radar Chart</option>
+    </select>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div id="chartTitle" class="text-center fw-bold fs-5 mb-3"></div>
+    <div style="position:relative; height:450px;">
+      <canvas id="mainChart"></canvas>
+    </div>
+    <div id="noDataMsg" class="text-center text-muted py-5 d-none">
+      <i class="fs-1">&#128202;</i>
+      <p class="mt-2">No data available. Please add records first.</p>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4" id="summaryCards">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const metrics = {
+  billing: [
+    {value: 'revenue', label: 'Revenue Trend (Monthly)', url: '/api/analytics/revenue', defaultChart: 'line'},
+    {value: 'invoice_status', label: 'Invoice Status Distribution', url: '/api/analytics/invoice_status', defaultChart: 'pie'},
+    {value: 'charge_type_revenue', label: 'Revenue by Charge Type', url: '/api/analytics/charge_type_revenue', defaultChart: 'bar'},
+    {value: 'unpaid_overview', label: 'Unpaid by Owner', url: '/api/analytics/unpaid_overview', defaultChart: 'bar'},
+    {value: 'payment_method', label: 'Payment Method Distribution', url: '/api/analytics/payment_method', defaultChart: 'doughnut'}
+  ],
+  equipment: [
+    {value: 'equipment_status', label: 'Equipment Status', url: '/api/analytics/equipment_status', defaultChart: 'pie'},
+    {value: 'equipment_type', label: 'Equipment Type Distribution', url: '/api/analytics/equipment_type', defaultChart: 'doughnut'},
+    {value: 'maintenance_cost', label: 'Maintenance Cost Trend', url: '/api/analytics/maintenance_cost', defaultChart: 'line'}
+  ],
+  workorder: [
+    {value: 'workorder_status', label: 'Work Order Status', url: '/api/analytics/workorder_status', defaultChart: 'pie'},
+    {value: 'workorder_type', label: 'Work Order Type Distribution', url: '/api/analytics/workorder_type', defaultChart: 'doughnut'},
+    {value: 'workorder_satisfaction', label: 'Satisfaction Rating', url: '/api/analytics/workorder_satisfaction', defaultChart: 'pie'}
+  ],
+  owner: [
+    {value: 'owner_area', label: 'Unit Area Distribution', url: '/api/analytics/owner_area', defaultChart: 'bar'}
+  ]
+};
+
+const colorPalette = [
+  'rgba(54, 162, 235, 0.8)',
+  'rgba(255, 99, 132, 0.8)',
+  'rgba(255, 206, 86, 0.8)',
+  'rgba(75, 192, 192, 0.8)',
+  'rgba(153, 102, 255, 0.8)',
+  'rgba(255, 159, 64, 0.8)',
+  'rgba(46, 204, 113, 0.8)',
+  'rgba(231, 76, 60, 0.8)',
+  'rgba(52, 73, 94, 0.8)',
+  'rgba(241, 196, 15, 0.8)'
+];
+
+const borderPalette = colorPalette.map(c => c.replace('0.8', '1'));
+
+let chartInstance = null;
+
+function onCategoryChange() {
+  const cat = document.getElementById('dataCategory').value;
+  const metricSelect = document.getElementById('dataMetric');
+  metricSelect.innerHTML = '';
+  metrics[cat].forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.value;
+    opt.textContent = m.label;
+    metricSelect.appendChild(opt);
+  });
+  const firstMetric = metrics[cat][0];
+  if (firstMetric) {
+    document.getElementById('chartType').value = firstMetric.defaultChart;
+  }
+  loadChart();
+}
+
+function getSelectedMetric() {
+  const cat = document.getElementById('dataCategory').value;
+  const val = document.getElementById('dataMetric').value;
+  return metrics[cat].find(m => m.value === val);
+}
+
+async function loadChart() {
+  const metric = getSelectedMetric();
+  if (!metric) return;
+
+  const chartType = document.getElementById('chartType').value;
+  document.getElementById('chartTitle').textContent = metric.label;
+
+  try {
+    const resp = await fetch(metric.url);
+    const json = await resp.json();
+
+    const noData = document.getElementById('noDataMsg');
+    const canvas = document.getElementById('mainChart');
+
+    if (!json.labels || json.labels.length === 0) {
+      noData.classList.remove('d-none');
+      canvas.style.display = 'none';
+      if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+      updateSummary(metric, json);
+      return;
+    }
+
+    noData.classList.add('d-none');
+    canvas.style.display = 'block';
+
+    if (chartInstance) { chartInstance.destroy(); }
+
+    const bgColors = json.labels.map((_, i) => colorPalette[i % colorPalette.length]);
+    const bdColors = json.labels.map((_, i) => borderPalette[i % borderPalette.length]);
+
+    const isLine = (chartType === 'line');
+    const dataset = {
+      label: metric.label,
+      data: json.data,
+      backgroundColor: isLine ? colorPalette[0] : bgColors,
+      borderColor: isLine ? borderPalette[0] : bdColors,
+      borderWidth: isLine ? 2 : 1,
+      tension: 0.3,
+      fill: isLine
+    };
+
+    chartInstance = new Chart(canvas, {
+      type: chartType,
+      data: { labels: json.labels, datasets: [dataset] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: ['pie','doughnut','polarArea','radar'].includes(chartType),
+            position: 'bottom'
+          },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                let val = ctx.parsed.y !== undefined ? ctx.parsed.y : ctx.parsed;
+                if (typeof val === 'object') val = ctx.raw;
+                if (metric.value.includes('revenue') || metric.value.includes('cost') || metric.value.includes('unpaid')) {
+                  return ctx.label + ': ¥' + Number(val).toLocaleString();
+                }
+                return ctx.label + ': ' + val;
+              }
+            }
+          }
+        },
+        scales: ['pie','doughnut','polarArea','radar'].includes(chartType) ? {} : {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+    updateSummary(metric, json);
+  } catch (e) {
+    console.error('Failed to load chart:', e);
+  }
+}
+
+function updateSummary(metric, json) {
+  const container = document.getElementById('summaryCards');
+  if (!json.data || json.data.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  const total = json.data.reduce((a, b) => a + b, 0);
+  const max = Math.max(...json.data);
+  const maxLabel = json.labels[json.data.indexOf(max)];
+  const count = json.data.length;
+
+  const isMoney = metric.value.includes('revenue') || metric.value.includes('cost') || metric.value.includes('unpaid');
+  const fmtTotal = isMoney ? '¥' + total.toLocaleString() : total;
+  const fmtMax = isMoney ? '¥' + max.toLocaleString() : max;
+
+  container.innerHTML = `
+    <div class="col-md-4">
+      <div class="card text-bg-primary mb-2">
+        <div class="card-body text-center">
+          <div class="small">Total</div>
+          <div class="fs-4 fw-bold">${fmtTotal}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-bg-success mb-2">
+        <div class="card-body text-center">
+          <div class="small">Highest</div>
+          <div class="fs-4 fw-bold">${maxLabel}: ${fmtMax}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-bg-info mb-2">
+        <div class="card-body text-center">
+          <div class="small">Categories</div>
+          <div class="fs-4 fw-bold">${count}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// init
+onCategoryChange();
+</script>
+{% endblock %}

@@ -1,0 +1,72 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<h4>新建缴费记录</h4>
+<form method="post" class="row g-3">
+  <div class="col-md-4">
+    <label class="form-label">业主</label>
+    <select name="owner_id" class="form-select" required>
+      {% for o in owners %}<option value="{{ o.id }}">{{ o.name }} ({{ o.unit }})</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">关联账单(可选)</label>
+    <select name="invoice_id" id="invoice_id" class="form-select" onchange="updateInvoiceInfo()">
+      <option value="">--</option>
+      {% for i in invoices %}
+        <option value="{{ i.id }}" 
+                data-amount="{{ i.amount }}" 
+                data-paid="{{ invoice_paid.get(i.id, 0) }}"
+                data-unpaid="{{ i.unpaid_amount or i.amount }}">
+          #{{ i.id }} {{ i.owner.name }} 总¥{{ i.amount }} 到期{{ i.due_date }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">账单信息</label>
+    <div id="invoice_info" class="form-control bg-light" style="padding: 0.375rem 0.75rem; min-height: 38px; display: flex; align-items: center;">
+      <small class="text-muted">选择账单查看详情</small>
+    </div>
+  </div>
+  <div class="col-md-4"><label class="form-label">金额</label><input name="amount" type="number" step="0.01" class="form-control" required></div>
+  <div class="col-md-4"><label class="form-label">方式</label>
+    <select name="method" class="form-select">
+      <option value="线上">线上</option>
+      <option value="线下">线下</option>
+      <option value="现金">现金</option>
+      <option value="银行转账">银行转账</option>
+    </select>
+  </div>
+  <div class="col-md-4"><label class="form-label">备注</label><input name="note" class="form-control"></div>
+  <div class="col-12">
+    <button class="btn btn-primary">保存</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('payments_list') }}">取消</a>
+  </div>
+</form>
+
+<script>
+function updateInvoiceInfo() {
+  const select = document.getElementById('invoice_id');
+  const infoDiv = document.getElementById('invoice_info');
+  const selectedOption = select.options[select.selectedIndex];
+  
+  if (selectedOption.value) {
+    const total = parseFloat(selectedOption.dataset.amount) || 0;
+    const paid = parseFloat(selectedOption.dataset.paid) || 0;
+    const unpaid = parseFloat(selectedOption.dataset.unpaid) || 0;
+    
+    infoDiv.innerHTML = `
+      <small>
+        <strong>总金额:</strong> ¥${total.toFixed(2)} | 
+        <strong>已缴费:</strong> ¥${paid.toFixed(2)} | 
+        <strong>还需缴费:</strong> ¥${unpaid.toFixed(2)}
+      </small>
+    `;
+  } else {
+    infoDiv.innerHTML = '<small class="text-muted">选择账单查看详情</small>';
+  }
+}
+</script>
+{% endblock %}
+

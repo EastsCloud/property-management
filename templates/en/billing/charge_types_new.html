@@ -1,0 +1,33 @@
+
+{% extends 'en/base.html' %}
+{% block content %}
+<h4>New Charge Type</h4>
+<form method="post" class="row g-3">
+  <div class="col-md-4"><label class="form-label">Charge Name</label><input name="name" class="form-control" placeholder="e.g. Property Fee, Parking Fee" required></div>
+  <div class="col-md-4">
+    <label class="form-label">Billing Cycle</label>
+    <select name="billing_cycle" class="form-select" required>
+      <option value="日">Day</option>
+      <option value="周">Week</option>
+      <option value="月" selected>Month</option>
+      <option value="季">Quarter</option>
+      <option value="年">Year</option>
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Link To Owner Info</label>
+    <select name="link_to" class="form-select" required>
+      <option value="none">None</option>
+      <option value="area">Area</option>
+      <option value="vehicles">Vehicles</option>
+    </select>
+  </div>
+  <div class="col-md-6"><label class="form-label">Unit Price</label><input name="price" type="number" step="0.01" class="form-control" placeholder="e.g. 2.5 (Property) or 300 (Parking)" required></div>
+  <div class="col-md-6"><label class="form-label">Description</label><input name="description" class="form-control" placeholder="e.g. 2.5元/㎡·月"></div>
+  <div class="col-12">
+    <button class="btn btn-primary">Save</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('charge_types') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+

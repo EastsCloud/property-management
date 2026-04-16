@@ -1,0 +1,38 @@
+
+{% extends 'en/base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h4>Payments</h4>
+  <a class="btn btn-primary" href="{{ url_for('payments_new') }}">+ New Payment</a>
+</div>
+
+<table class="table table-striped">
+  <thead><tr><th>ID</th><th>Time</th><th>Owner</th><th>Invoice</th><th>Amount</th><th>Method</th><th>Note</th></tr></thead>
+  <tbody>
+  {% for p in payments %}
+    <tr>
+      <td>{{ p.id }}</td>
+      <td>{{ p.paid_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>{{ p.owner.name }}</td>
+      <td>
+        {% if p.invoice %}
+          <a href="{{ url_for('invoices_list') }}">#{{ p.invoice.id }}</a>
+          <br><small class="text-muted">
+            Total:¥{{ '%.2f'|format(p.invoice.amount) }} | 
+            Paid:¥{{ '%.2f'|format(invoice_paid.get(p.invoice.id, 0)) }} | 
+            Remaining:¥{{ '%.2f'|format(p.invoice.unpaid_amount or p.invoice.amount) }}
+          </small>
+        {% else %}
+          <span class="text-muted">--</span>
+        {% endif %}
+      </td>
+      <td>¥{{ '%.2f'|format(p.amount) }}</td>
+      <td>{{ p.method }}</td>
+      <td>{{ p.note or '-' }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+

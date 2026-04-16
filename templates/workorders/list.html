@@ -1,0 +1,31 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center">
+  <h4>工单</h4>
+  <a class="btn btn-primary" href="{{ url_for('workorders_new') }}">+ 新建工单</a>
+</div>
+<form class="row gy-2 gx-2 my-2">
+  <div class="col-auto">
+    <select class="form-select" name="status" onchange="this.form.submit()">
+      <option value="">全部状态</option>
+      {% for s in ['新建','处理中','已完成','已关闭'] %}
+        <option value="{{ s }}" {{ 'selected' if status==s else '' }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</form>
+<table class="table table-hover">
+  <thead><tr><th>ID</th><th>类型</th><th>状态</th><th>优先级</th><th>描述</th><th>创建时间</th><th></th></tr></thead>
+  <tbody>
+    {% for w in wos %}
+      <tr>
+        <td>{{ w.id }}</td><td>{{ w.type }}</td><td>{{ w.status }}</td><td>{{ w.priority }}</td>
+        <td>{{ w.description[:50] }}{% if w.description|length>50 %}...{% endif %}</td>
+        <td>{{ w.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('workorders_detail', wid=w.id) }}">详情</a></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
