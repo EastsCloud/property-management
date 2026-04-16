@@ -3,6 +3,10 @@ Based on Flask + SQLAlchemy
 
 ## 版本 Versions
 
+### v-2.2
+
+**Updates**: 优化账单/缴费统计为聚合查询（减少N+1查询），账单/缴费列表新增分页，并加入逾期预警展示 Optimized billing/payment stats via aggregate queries (reduced N+1), added pagination to invoice/payment lists, and introduced overdue alerts
+
 ### v-2.1
 
 **Updates**: 自造测试数据集中管理到 `test_data.py`，主项目不再分散硬编码初始化数据 Centralized seeded/test data into `test_data.py` to avoid scattered hardcoded data in the main app
