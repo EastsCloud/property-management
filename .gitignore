@@ -1,5 +1,5 @@
 .env
 __pycache__/
 *.pyc
-PROJECT_INFO.md
 test.ipynb
+PROJECT_INFO.md
