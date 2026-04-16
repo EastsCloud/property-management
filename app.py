@@ -5,6 +5,20 @@ from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from test_data import get_seed_data
 
+
+def get_invoice_paid_map(invoice_ids=None):
+    """Return {invoice_id: total_paid} using one aggregate query."""
+    from sqlalchemy import func
+
+    q = db.session.query(
+        Payment.invoice_id,
+        func.coalesce(func.sum(Payment.amount), 0.0).label("total_paid"),
+    ).filter(Payment.invoice_id.isnot(None))
+    if invoice_ids:
+        q = q.filter(Payment.invoice_id.in_(list(invoice_ids)))
+    q = q.group_by(Payment.invoice_id)
+    return {int(iid): float(total) for iid, total in q.all()}
+
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
@@ -93,12 +107,18 @@ def init_db():
 def dashboard():
     owners = Owner.query.count()
     unpaid = Invoice.query.filter(Invoice.status!="已支付").count()
+    today = date.today()
+    overdue = Invoice.query.filter(
+        Invoice.status != "已支付",
+        Invoice.due_date < today,
+        (Invoice.unpaid_amount > 0) | (Invoice.unpaid_amount.is_(None)),
+    ).count()
     open_wos = WorkOrder.query.filter(WorkOrder.status!="已完成").count()
     equips = Equipment.query.count()
     latest_ann = Announcement.query.order_by(Announcement.created_at.desc()).limit(5).all()
     recent_wos = WorkOrder.query.order_by(WorkOrder.created_at.desc()).limit(8).all()
     move_outs = Owner.query.order_by(Owner.created_at.desc()).limit(10).all()   # placeholder
-    return render_view('dashboard.html', owners=owners, unpaid=unpaid, open_wos=open_wos, equips=equips, latest_ann=latest_ann, recent_wos=recent_wos, move_outs=move_outs)
+    return render_view('dashboard.html', owners=owners, unpaid=unpaid, overdue=overdue, open_wos=open_wos, equips=equips, latest_ann=latest_ann, recent_wos=recent_wos, move_outs=move_outs)
 
 @app.route('/owners')
 def owners_list():
@@ -185,18 +205,34 @@ def charge_types_new():
 def invoices_list():
     q = request.args.get('q','').strip()
     status = request.args.get('status','')
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 20))
     query = Invoice.query
     if status:
         query = query.filter_by(status=status)
-    invoices = query.order_by(Invoice.due_date.asc()).all()
-    
-    # 为每个账单计算已缴费金额
-    invoice_paid = {}
-    for inv in invoices:
-        paid = sum([p.amount for p in Payment.query.filter_by(invoice_id=inv.id).all()])
-        invoice_paid[inv.id] = paid
-    
-    return render_view('billing/invoices.html', invoices=invoices, q=q, status=status, invoice_paid=invoice_paid)
+    pagination = query.order_by(Invoice.due_date.asc()).paginate(page=page, per_page=per_page, error_out=False)
+    invoices = pagination.items
+
+    invoice_ids = [inv.id for inv in invoices]
+    invoice_paid = get_invoice_paid_map(invoice_ids)
+
+    today = date.today()
+    overdue_count = Invoice.query.filter(
+        Invoice.status != "已支付",
+        Invoice.due_date < today,
+        (Invoice.unpaid_amount > 0) | (Invoice.unpaid_amount.is_(None)),
+    ).count()
+
+    return render_view(
+        "billing/invoices.html",
+        invoices=invoices,
+        q=q,
+        status=status,
+        invoice_paid=invoice_paid,
+        pagination=pagination,
+        today=today,
+        overdue_count=overdue_count,
+    )
 
 @app.route('/billing/invoices/new', methods=['GET','POST'])
 def invoices_new():
@@ -236,17 +272,20 @@ def invoices_new():
 
 @app.route('/billing/payments')
 def payments_list():
-    owners = Owner.query.all()
-    invoices = Invoice.query.filter(Invoice.status!="已支付").all()
-    payments = Payment.query.order_by(Payment.paid_at.desc()).all()
-    
-    # 为每个账单计算已缴费金额
-    invoice_paid = {}
-    for inv in Invoice.query.all():
-        paid = sum([p.amount for p in Payment.query.filter_by(invoice_id=inv.id).all()])
-        invoice_paid[inv.id] = paid
-    
-    return render_view('billing/payments.html', payments=payments, owners=owners, invoices=invoices, invoice_paid=invoice_paid)
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 20))
+    payments_pagination = Payment.query.order_by(Payment.paid_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    payments = payments_pagination.items
+
+    invoice_ids = {p.invoice_id for p in payments if p.invoice_id}
+    invoice_paid = get_invoice_paid_map(invoice_ids)
+
+    return render_view(
+        "billing/payments.html",
+        payments=payments,
+        invoice_paid=invoice_paid,
+        pagination=payments_pagination,
+    )
 
 @app.route('/billing/payments/new', methods=['GET','POST'])
 def payments_new():
@@ -262,9 +301,9 @@ def payments_new():
         if inv_id:
             inv = Invoice.query.get(int(inv_id))
             if inv:
-                # 计算该账单的总已缴费金额
-                total_paid = sum([pay.amount for pay in Payment.query.filter_by(invoice_id=int(inv_id)).all()])
-                total_paid += p.amount  # 加上本次缴费
+                from sqlalchemy import func
+                existing_paid = db.session.query(func.coalesce(func.sum(Payment.amount), 0.0)).filter(Payment.invoice_id == int(inv_id)).scalar() or 0.0
+                total_paid = float(existing_paid) + float(p.amount)
                 
                 # 更新未付金额
                 inv.unpaid_amount = max(0, inv.amount - total_paid)
@@ -279,13 +318,7 @@ def payments_new():
     
     owners = Owner.query.all()
     invoices = Invoice.query.filter(Invoice.status!="已支付").all()
-    
-    # 为每个账单计算已缴费金额
-    invoice_paid = {}
-    for inv in Invoice.query.all():
-        paid = sum([p.amount for p in Payment.query.filter_by(invoice_id=inv.id).all()])
-        invoice_paid[inv.id] = paid
-    
+    invoice_paid = get_invoice_paid_map([inv.id for inv in invoices])
     return render_view('billing/payments_new.html', owners=owners, invoices=invoices, invoice_paid=invoice_paid)
 
 @app.route('/equipment')

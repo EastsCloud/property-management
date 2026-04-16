@@ -15,6 +15,9 @@
       <div class="card-body">
         <div class="small text-muted">Unpaid Invoices</div>
         <div class="h3">{{ unpaid }}</div>
+        {% if overdue and overdue > 0 %}
+          <div class="small text-danger">Overdue: {{ overdue }}</div>
+        {% endif %}
       </div>
     </div>
   </div>
